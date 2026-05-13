@@ -26,12 +26,20 @@ fn handleConnection(io: std.Io, stream: net.Stream) !void {
 
     var http_server = std.http.Server.init(&connection_reader.interface, &connection_writer.interface);
 
-    var request = try http_server.receiveHead();
+    while (true) {
+        var request = http_server.receiveHead() catch |err| switch (err) {
+            .HttpConnectionClosing, .HttpRequestTruncated => break,
+            else => return err,
+        };
 
-    try request.respond("Hello from Zig\n", .{
-        .keep_alive = false,
-        .extra_headers = &.{
-            .{ .name = "content-type", .value = "text/plain" },
-        },
-    });
+        const keep_alive = request.head.keep_alive;
+        try request.respond("Hello from Zig\n", .{
+            .keep_alive = true,
+            .extra_headers = &.{
+                .{ .name = "content-type", .value = "text/plain" },
+            },
+        });
+
+        if (!keep_alive) break;
+    }
 }
