@@ -1,29 +1,20 @@
 const http_types = @import("http_types.zig");
-const Response = http_types.Response;
-const Status = http_types.Status;
+const Route = http_types.Route;
+const Method = http_types.Route;
 
-pub fn get_root() !Response {
-    return .{
-        .status = Status.ok,
-        .headers = &.{
-            .{
-                .name = "content_type",
-                .value = "text/plain",
-            },
-        },
-        .body = "Welcome to the root\n",
-    };
-}
+const route_handlers = @import("route_handlers.zig");
+const get_root = route_handlers.get_root;
+const get_name = route_handlers.get_name;
 
-pub fn get_name() !Response {
-    return .{
-        .status = Status.ok,
-        .headers = &.{
-            .{
-                .name = "content_type",
-                .value = "text/plain",
-            },
-        },
-        .body = "Casey\n",
-    };
-}
+pub const routes: []const Route = &.{
+    .{
+        .target = "/",
+        .method = Method.GET,
+        .handler = get_root,
+    },
+    .{
+        .target = "/name",
+        .method = Method.GET,
+        .handler = get_name,
+    },
+};
