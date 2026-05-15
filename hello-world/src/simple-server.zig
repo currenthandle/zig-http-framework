@@ -34,7 +34,7 @@ fn handleConnection(io: std.Io, stream: net.Stream) !void {
 
         const keep_alive = request.head.keep_alive;
         try request.respond("Hello from Zig\n", .{
-            .keep_alive = true,
+            .keep_alive = keep_alive,
             .extra_headers = &.{
                 .{ .name = "content-type", .value = "text/plain" },
             },
