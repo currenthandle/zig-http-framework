@@ -74,15 +74,18 @@ const Route = struct {
 
 fn router(request: std.http.Server.Request) !Response {
     const target = request.head.target;
-    std.log.debug("Target: {s}", .{target});
     const method = request.head.method;
-    std.log.debug("Method: {s}", .{@tagName(method)});
 
     const routes: []const Route = &.{
         .{
             .target = "/",
             .method = Method.GET,
             .handler = getRoot,
+        },
+        .{
+            .target = "/name",
+            .method = Method.GET,
+            .handler = getName,
         },
     };
 
@@ -112,5 +115,18 @@ fn getRoot() !Response {
             },
         },
         .body = "Welcome to the root\n",
+    };
+}
+
+fn getName() !Response {
+    return .{
+        .status = Status.ok,
+        .headers = &.{
+            .{
+                .name = "content_type",
+                .value = "text/plain",
+            },
+        },
+        .body = "Casey\n",
     };
 }
