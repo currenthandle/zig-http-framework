@@ -12,7 +12,10 @@ pub fn handle_connection(io: std.Io, stream: net.Stream) !void {
     var connection_reader = stream.reader(io, &read_buffer);
     var connection_writer = stream.writer(io, &write_buffer);
 
-    var http_server = std.http.Server.init(&connection_reader.interface, &connection_writer.interface);
+    var http_server = std.http.Server.init(
+        &connection_reader.interface,
+        &connection_writer.interface,
+    );
 
     while (true) {
         var request = http_server.receiveHead() catch |err| switch (err) {

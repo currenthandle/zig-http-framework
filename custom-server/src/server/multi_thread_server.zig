@@ -5,9 +5,12 @@ const handle_connection = @import("handle_connection.zig").handle_connection;
 
 pub fn main(init: std.process.Init) !void {
     const io = init.io;
-    const address: net.IpAddress = .{ .ip4 = net.Ip4Address.unspecified(8082) };
+    const port = 8082;
+    const address: net.IpAddress = .{ .ip4 = net.Ip4Address.unspecified(port) };
 
     var server = try address.listen(io, .{ .reuse_address = true });
+    std.log.info("Multi-thread server listenting on port {}", .{port});
+
 
     // accept sockets
     while (true) {

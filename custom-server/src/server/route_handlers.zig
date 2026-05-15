@@ -11,7 +11,7 @@ pub fn get_root() !Response {
                 .value = "text/plain",
             },
         },
-        .body = "Welcome to the root\n\n",
+        .body = "Welcome to the root",
     };
 }
 
@@ -24,6 +24,6 @@ pub fn get_name() !Response {
                 .value = "text/plain",
             },
         },
-        .body = "Casey\n\n",
+        .body = "Casey",
     };
 }
