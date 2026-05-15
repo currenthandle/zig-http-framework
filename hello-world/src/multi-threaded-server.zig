@@ -29,7 +29,10 @@ fn handleConnection(io: std.Io, stream: net.Stream) !void {
     while (true) {
         var request = http_server.receiveHead() catch |err| switch (err) {
             error.HttpConnectionClosing, error.HttpRequestTruncated => break,
-            else => return err,
+            else => {
+                std.log.err("Connection error: {s}", .{@errorName(err)});
+                return err;
+            },
         };
         const keep_alive = request.head.keep_alive;
         try request.respond("Hello from multi-threaded Zig server\n", .{
