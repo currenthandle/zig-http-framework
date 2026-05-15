@@ -28,6 +28,6 @@ pub fn router(request: Request) !Response {
             .name = "content_type",
             .value = "text/plain",
         }},
-        .body = "Not found\n",
+        .body = "Not found\n\n",
     };
 }
