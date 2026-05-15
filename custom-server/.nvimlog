@@ -1,0 +1,2 @@
+WRN 2026-05-13T11:51:16.828 ?.601      server_start:163: Failed to start server: operation not permitted: /var/folders/gz/_605vy5n7rvg45wwv3261x4r0000gn/T/nvim.casey/Mq5K9i/nvim.601.0
+WRN 2026-05-13T11:51:22.685 ?.766      server_start:163: Failed to start server: operation not permitted: /var/folders/gz/_605vy5n7rvg45wwv3261x4r0000gn/T/nvim.casey/F72TfK/nvim.766.0
