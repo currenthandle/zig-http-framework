@@ -1,0 +1,46 @@
+const std = @import("std");
+
+const http_types = @import("http_types.zig");
+const r = @import("routes.zig");
+
+const get_root = r.get_root;
+const get_name = r.get_name;
+
+const Request = http_types.Request;
+const Route = http_types.Route;
+const Method = http_types.Method;
+const Response = http_types.Response;
+const Status = http_types.Status;
+
+pub fn router(request: Request) !Response {
+    const target = request.head.target;
+    const method = request.head.method;
+
+    const routes: []const Route = &.{
+        .{
+            .target = "/",
+            .method = Method.GET,
+            .handler = get_root,
+        },
+        .{
+            .target = "/name",
+            .method = Method.GET,
+            .handler = get_name,
+        },
+    };
+
+    for (routes) |route| {
+        if (route.method == method and std.mem.eql(u8, route.target, target)) {
+            return route.handler();
+        }
+    }
+
+    return .{
+        .status = Status.not_found,
+        .headers = &.{.{
+            .name = "content_type",
+            .value = "text/plain",
+        }},
+        .body = "Not found\n",
+    };
+}
