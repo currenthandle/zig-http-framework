@@ -28,7 +28,7 @@ fn handleConnection(io: std.Io, stream: net.Stream) !void {
 
     while (true) {
         var request = http_server.receiveHead() catch |err| switch (err) {
-            .HttpConnectionClosing, .HttpRequestTruncated => break,
+            error.HttpConnectionClosing, error.HttpRequestTruncated => break,
             else => return err,
         };
 
