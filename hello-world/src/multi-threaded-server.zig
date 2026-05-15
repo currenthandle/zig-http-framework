@@ -28,7 +28,8 @@ fn handleConnection(io: std.Io, stream: net.Stream) !void {
 
     while (true) {
         var request = http_server.receiveHead() catch |err| switch (err) {
-            error.HttpConnectionClosing, error.HttpRequestTruncated => break,
+            error.HttpConnectionClosing, error.HttpRequestTruncated, error.ReadFailed => break,
+
             else => {
                 std.log.err("Connection error: {s}", .{@errorName(err)});
                 return err;
