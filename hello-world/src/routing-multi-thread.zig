@@ -36,17 +36,81 @@ fn handleConnection(io: std.Io, stream: net.Stream) !void {
             },
         };
 
-        const target = request.head.target;
-        std.log.debug("Target: {s}", .{target});
+        const response = router(request) catch |err| {
+            std.log.err("Routing error: {s}", .{@errorName(err)});
+            return err;
+        };
 
         const keep_alive = request.head.keep_alive;
-        try request.respond("Hello from multi-threaded router Zig server\n", .{
+
+        request.respond(response.body, .{
             .keep_alive = keep_alive,
-            .extra_headers = &.{
-                .{ .name = "content-type", .value = "text/plain" },
-            },
-        });
+            .extra_headers = response.headers,
+        }) catch |err| {
+            std.log.err("Response error: {s}", .{@errorName(err)});
+            return err;
+        };
 
         if (!keep_alive) break;
     }
+}
+
+const Method = std.http.Method;
+const Request = std.http.Server.Request;
+const Status = std.http.Status;
+const Headers = []const std.http.Header;
+
+const Response = struct {
+    status: Status,
+    headers: Headers,
+    body: []const u8,
+};
+
+const Route = struct {
+    target: []const u8,
+    method: std.http.Method,
+    handler: *const fn () anyerror!Response,
+};
+
+fn router(request: std.http.Server.Request) !Response {
+    const target = request.head.target;
+    std.log.debug("Target: {s}", .{target});
+    const method = request.head.method;
+    std.log.debug("Method: {s}", .{@tagName(method)});
+
+    const routes: []const Route = &.{
+        .{
+            .target = "/",
+            .method = Method.GET,
+            .handler = getRoot,
+        },
+    };
+
+    for (routes) |route| {
+        if (route.method == method and std.mem.eql(u8, route.target, target)) {
+            return route.handler();
+        }
+    }
+
+    return .{
+        .status = Status.not_found,
+        .headers = &.{.{
+            .name = "content_type",
+            .value = "text/plain",
+        }},
+        .body = "Not found\n",
+    };
+}
+
+fn getRoot() !Response {
+    return .{
+        .status = Status.ok,
+        .headers = &.{
+            .{
+                .name = "content_type",
+                .value = "text/plain",
+            },
+        },
+        .body = "Welcome to the root\n",
+    };
 }
