@@ -8,16 +8,16 @@ const get_name = route_handlers.get_name;
 const get_user_age = route_handlers.get_user_age;
 
 pub const routes: []const Route = &.{
-    .{
-        .target = "/",
-        .method = Method.GET,
-        .handler = get_root,
-    },
-    .{
-        .target = "/name",
-        .method = Method.GET,
-        .handler = get_name,
-    },
+    // .{
+    //     .target = "/",
+    //     .method = Method.GET,
+    //     .handler = get_root,
+    // },
+    // .{
+    //     .target = "/name",
+    //     .method = Method.GET,
+    //     .handler = get_name,
+    // },
     .{
         .target = "/person/:age",
         .method = Method.GET,
