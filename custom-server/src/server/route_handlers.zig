@@ -1,9 +1,6 @@
-const std = @import("std");
-
 const http_types = @import("http_types.zig");
 const Response = http_types.Response;
 const Status = http_types.Status;
-const Param = http_types.Param;
 const HandlerContext = http_types.HandlerContext;
 const param = http_types.param;
 

@@ -13,7 +13,7 @@ const Status = http_types.Status;
 const Param = http_types.Param;
 // const Params = http_types.Params;
 
-fn parse_query_params(query_str: []const u8, buf: []Param) []const Param {
+fn parse_query_params(query_str: []const u8, buf: []Param) ![]const Param {
     var query_segs = std.mem.splitScalar(u8, query_str, '&');
 
     var param_pos: usize = 0;
@@ -21,7 +21,7 @@ fn parse_query_params(query_str: []const u8, buf: []Param) []const Param {
     while (query_segs.next()) |query_seg| {
         if (param_pos >= buf.len) {
             std.log.err("Max query params {} exceeded", .{buf.len});
-            break;
+            return error.TooManyQueryParams;
         }
         const has_eq = std.mem.indexOfScalar(u8, query_seg, '=');
         if (has_eq) |eq_pos| {
@@ -48,7 +48,16 @@ pub fn router(request: Request) !Response {
     if (has_query) |query_pos| {
         req_path = request.head.target[0..query_pos];
         const query_str = request.head.target[query_pos + 1 ..];
-        query_params = parse_query_params(query_str, query_buf[0..]);
+        query_params = parse_query_params(query_str, query_buf[0..]) catch {
+            return .{
+                .status = Status.bad_request,
+                .headers = &.{.{
+                    .name = "content_type",
+                    .value = "text/plain",
+                }},
+                .body = "Max query params exceeded",
+            };
+        };
     }
 
     // for (query_params) |param| {
@@ -80,7 +89,15 @@ pub fn router(request: Request) !Response {
                 if (route_seg.len > 0 and route_seg[0] == ':') {
                     if (param_count >= param_buf.len) {
                         std.log.err("Max route params {} exceeded", .{param_buf.len});
-                        continue :route_loop;
+                        // continue :route_loop;
+                        return .{
+                            .status = Status.bad_request,
+                            .headers = &.{.{
+                                .name = "content_type",
+                                .value = "text/plain",
+                            }},
+                            .body = "Max route params exceeded",
+                        };
                     }
 
                     param_buf[param_count] = .{
