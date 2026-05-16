@@ -16,8 +16,10 @@ pub const Param = struct {
     value: []const u8,
 };
 pub const Params = []const Param;
+pub const RequestParams = []const Param;
+pub const QueryParams = []const Param;
 pub const Route = struct {
     target: []const u8,
     method: std.http.Method,
-    handler: *const fn (Params) anyerror!Response,
+    handler: *const fn (RequestParams, QueryParams) anyerror!Response,
 };

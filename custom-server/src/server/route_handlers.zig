@@ -3,7 +3,7 @@ const Response = http_types.Response;
 const Status = http_types.Status;
 const Params = http_types.Params;
 
-pub fn get_root(_: Params) !Response {
+pub fn get_root(_: Params, _: Params) !Response {
     return .{
         .status = Status.ok,
         .headers = &.{
@@ -16,7 +16,7 @@ pub fn get_root(_: Params) !Response {
     };
 }
 
-pub fn get_name(_: Params) !Response {
+pub fn get_name(_: Params, _: Params) !Response {
     return .{
         .status = Status.ok,
         .headers = &.{
@@ -29,7 +29,7 @@ pub fn get_name(_: Params) !Response {
     };
 }
 
-pub fn get_user_age(params: Params) !Response {
+pub fn get_user_age(query_params: Params, _: Params) !Response {
     return .{
         .status = Status.ok,
         .headers = &.{
@@ -38,6 +38,6 @@ pub fn get_user_age(params: Params) !Response {
                 .value = "text/plain",
             },
         },
-        .body = params[0].value,
+        .body = query_params[0].value,
     };
 }

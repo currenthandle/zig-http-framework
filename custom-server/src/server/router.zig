@@ -94,7 +94,8 @@ pub fn router(request: Request) !Response {
                 if (!std.mem.eql(u8, route_seg, req_seg)) continue :route_loop;
             }
             if (req_path_segs.next() != null) continue :route_loop;
-            return route.handler(param_buf[0..param_count]);
+            const route_params = param_buf[0..param_count];
+            return route.handler(route_params, query_params);
         }
     }
 
