@@ -13,6 +13,10 @@ const Status = http_types.Status;
 const Param = http_types.Param;
 // const Params = http_types.Params;
 
+const responses = @import("responses.zig");
+const not_found = responses.not_found;
+const bad_request = responses.bad_request;
+
 fn parse_query_params(query_str: []const u8, buf: []Param) ![]const Param {
     var query_segs = std.mem.splitScalar(u8, query_str, '&');
 
@@ -49,14 +53,7 @@ pub fn router(request: Request) !Response {
         req_path = request.head.target[0..query_pos];
         const query_str = request.head.target[query_pos + 1 ..];
         query_params = parse_query_params(query_str, query_buf[0..]) catch {
-            return .{
-                .status = Status.bad_request,
-                .headers = &.{.{
-                    .name = "content_type",
-                    .value = "text/plain",
-                }},
-                .body = "Max query params exceeded",
-            };
+            return bad_request("Max query params exceeded");
         };
     }
 
@@ -89,15 +86,7 @@ pub fn router(request: Request) !Response {
                 if (route_seg.len > 0 and route_seg[0] == ':') {
                     if (param_count >= param_buf.len) {
                         std.log.err("Max route params {} exceeded", .{param_buf.len});
-                        // continue :route_loop;
-                        return .{
-                            .status = Status.bad_request,
-                            .headers = &.{.{
-                                .name = "content_type",
-                                .value = "text/plain",
-                            }},
-                            .body = "Max route params exceeded",
-                        };
+                        return bad_request("Max route params exceeded");
                     }
 
                     param_buf[param_count] = .{
@@ -120,12 +109,5 @@ pub fn router(request: Request) !Response {
         }
     }
 
-    return .{
-        .status = Status.not_found,
-        .headers = &.{.{
-            .name = "content_type",
-            .value = "text/plain",
-        }},
-        .body = "Not found",
-    };
+    return not_found();
 }
