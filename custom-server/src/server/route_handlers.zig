@@ -1,6 +1,9 @@
+const std = @import("std");
+
 const http_types = @import("http_types.zig");
 const Response = http_types.Response;
 const Status = http_types.Status;
+const Param = http_types.Param;
 const HandlerContext = http_types.HandlerContext;
 
 pub fn get_root(_: HandlerContext) !Response {
@@ -39,6 +42,14 @@ pub fn get_user_age(ctx: HandlerContext) !Response {
                 .value = "text/plain",
             },
         },
-        .body = route_params[0].value,
+        // .body = route_params[0].value,
+        .body = param(route_params, "age") orelse "missing",
     };
+}
+
+fn param(params: []const Param, name: []const u8) ?[]const u8 {
+    for (params) |p| {
+        if (std.mem.eql(u8, p.name, name)) return p.value;
+    }
+    return null;
 }
