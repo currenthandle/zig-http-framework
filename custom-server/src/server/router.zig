@@ -59,7 +59,7 @@ pub fn router(request: Request) !Response {
     route_loop: for (routes) |route| {
         if (route.method == request.head.method) {
             var req_path_segs = std.mem.splitScalar(u8, req_path, '/');
-            var route_path_segs = std.mem.splitScalar(u8, route.target, '/');
+            var route_path_segs = std.mem.splitScalar(u8, route.path, '/');
 
             // var debug_req_path_segs = std.mem.splitScalar(u8, request.head.target, '/');
             // while (debug_req_path_segs.next()) |seg| {
@@ -95,7 +95,11 @@ pub fn router(request: Request) !Response {
             }
             if (req_path_segs.next() != null) continue :route_loop;
             const route_params = param_buf[0..param_count];
-            return route.handler(route_params, query_params);
+
+            return route.handler(.{
+                .route_params = route_params,
+                .query_params = query_params,
+            });
         }
     }
 

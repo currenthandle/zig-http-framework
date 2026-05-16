@@ -9,17 +9,17 @@ const get_user_age = route_handlers.get_user_age;
 
 pub const routes: []const Route = &.{
     .{
-        .target = "/",
+        .path = "/",
         .method = Method.GET,
         .handler = get_root,
     },
     .{
-        .target = "/name",
+        .path = "/name",
         .method = Method.GET,
         .handler = get_name,
     },
     .{
-        .target = "/person/:age",
+        .path = "/person/:age",
         .method = Method.GET,
         .handler = get_user_age,
     },

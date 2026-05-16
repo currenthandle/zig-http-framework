@@ -1,9 +1,9 @@
 const http_types = @import("http_types.zig");
 const Response = http_types.Response;
 const Status = http_types.Status;
-const Params = http_types.Params;
+const HandlerContext = http_types.HandlerContext;
 
-pub fn get_root(_: Params, _: Params) !Response {
+pub fn get_root(_: HandlerContext) !Response {
     return .{
         .status = Status.ok,
         .headers = &.{
@@ -16,7 +16,7 @@ pub fn get_root(_: Params, _: Params) !Response {
     };
 }
 
-pub fn get_name(_: Params, _: Params) !Response {
+pub fn get_name(_: HandlerContext) !Response {
     return .{
         .status = Status.ok,
         .headers = &.{
@@ -29,7 +29,8 @@ pub fn get_name(_: Params, _: Params) !Response {
     };
 }
 
-pub fn get_user_age(query_params: Params, _: Params) !Response {
+pub fn get_user_age(ctx: HandlerContext) !Response {
+    const route_params = ctx.route_params;
     return .{
         .status = Status.ok,
         .headers = &.{
@@ -38,6 +39,6 @@ pub fn get_user_age(query_params: Params, _: Params) !Response {
                 .value = "text/plain",
             },
         },
-        .body = query_params[0].value,
+        .body = route_params[0].value,
     };
 }
