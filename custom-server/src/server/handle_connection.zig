@@ -37,6 +37,7 @@ pub fn handle_connection(io: std.Io, stream: net.Stream) !void {
         request.respond(response.body, .{
             .keep_alive = keep_alive,
             .extra_headers = response.headers,
+            .status = response.status,
         }) catch |err| {
             std.log.err("Response error: {s}", .{@errorName(err)});
             return err;
