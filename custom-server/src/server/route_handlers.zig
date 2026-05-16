@@ -1,9 +1,9 @@
 const http_types = @import("http_types.zig");
 const Response = http_types.Response;
 const Status = http_types.Status;
-const RouteParams = http_types.RouteParams;
+const Params = http_types.Params;
 
-pub fn get_root(_: RouteParams) !Response {
+pub fn get_root(_: Params) !Response {
     return .{
         .status = Status.ok,
         .headers = &.{
@@ -16,7 +16,7 @@ pub fn get_root(_: RouteParams) !Response {
     };
 }
 
-pub fn get_name(_: RouteParams) !Response {
+pub fn get_name(_: Params) !Response {
     return .{
         .status = Status.ok,
         .headers = &.{
@@ -29,7 +29,7 @@ pub fn get_name(_: RouteParams) !Response {
     };
 }
 
-pub fn get_user_age(params: RouteParams) !Response {
+pub fn get_user_age(params: Params) !Response {
     return .{
         .status = Status.ok,
         .headers = &.{

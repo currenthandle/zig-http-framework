@@ -10,7 +10,37 @@ const get_name = route_handlers.get_name;
 const Request = http_types.Request;
 const Response = http_types.Response;
 const Status = http_types.Status;
-const RouteParam = http_types.RouteParam;
+const Param = http_types.Param;
+// const Params = http_types.Params;
+
+fn parse_query_params(target: []const u8) []const Param {
+    // std.log.debug("target {s}", .{target});
+    const has_query = std.mem.indexOfScalar(u8, target, '?');
+    if (has_query) |query_pos| {
+        const query_str = target[query_pos + 1 ..];
+
+        var query_segs = std.mem.splitScalar(u8, query_str, '&');
+
+        var param_buf: [24]Param = undefined;
+        var param_pos = 0;
+
+        while (query_segs.next()) |query_seg| {
+            const has_eq = std.mem.indexOfScalar(u8, query_seg, '=');
+            if (has_eq) |eq_pos| {
+                const name = query_seg[0..eq_pos];
+                const value = query_seg[eq_pos + 1 ..];
+
+                param_buf[param_pos] = .{
+                    .name = name,
+                    .value = value,
+                };
+                param_pos += 1;
+            }
+        }
+        return param_buf;
+    }
+    return &.{};
+}
 
 pub fn router(request: Request) !Response {
     route_loop: for (routes) |route| {
@@ -18,7 +48,17 @@ pub fn router(request: Request) !Response {
             var req_path_segs = std.mem.splitScalar(u8, request.head.target, '/');
             var route_path_segs = std.mem.splitScalar(u8, route.target, '/');
 
-            var param_buf: [8]RouteParam = undefined;
+            // var debug_req_path_segs = std.mem.splitScalar(u8, request.head.target, '/');
+            // while (debug_req_path_segs.next()) |seg| {
+            //     std.log.debug("req seg: {s}", .{seg});
+            // }
+            //
+            // var debug_route_path_segs = std.mem.splitScalar(u8, route.target, '/');
+            // while (debug_route_path_segs.next()) |seg| {
+            //     std.log.debug("route seg: {s}", .{seg});
+            // }
+
+            var param_buf: [8]Param = undefined;
             var param_count: usize = 0;
 
             while (route_path_segs.next()) |route_seg| {

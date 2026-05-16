@@ -9,13 +9,15 @@ pub const Response = struct {
     headers: Headers,
     body: []const u8,
 };
-pub const RouteParam = struct {
+
+// General for route params and query params
+pub const Param = struct {
     name: []const u8,
     value: []const u8,
 };
-pub const RouteParams = []const RouteParam;
+pub const Params = []const Param;
 pub const Route = struct {
     target: []const u8,
     method: std.http.Method,
-    handler: *const fn (RouteParams) anyerror!Response,
+    handler: *const fn (Params) anyerror!Response,
 };
