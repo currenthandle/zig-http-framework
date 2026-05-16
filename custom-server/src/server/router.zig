@@ -23,7 +23,7 @@ pub fn router(request: Request) !Response {
             defer route_params.deinit(std.heap.page_allocator);
 
             while (route_path_segs.next()) |route_seg| {
-                const req_seg = req_path_segs.next() orelse break;
+                const req_seg = req_path_segs.next() orelse continue :route_loop;
 
                 if (route_seg.len > 0 and route_seg[0] == ':') {
                     try route_params.append(std.heap.page_allocator, .{
@@ -36,6 +36,7 @@ pub fn router(request: Request) !Response {
 
                 if (!std.mem.eql(u8, route_seg, req_seg)) continue :route_loop;
             }
+            if (req_path_segs.next() != null) continue :route_loop;
             return route.handler(route_params.items);
         }
     }
