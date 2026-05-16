@@ -19,6 +19,10 @@ fn parse_query_params(query_str: []const u8, buf: []Param) []const Param {
     var param_pos: usize = 0;
 
     while (query_segs.next()) |query_seg| {
+        if (param_pos >= buf.len) {
+            std.log.err("Max query params {} exceeded", .{buf.len});
+            break;
+        }
         const has_eq = std.mem.indexOfScalar(u8, query_seg, '=');
         if (has_eq) |eq_pos| {
             const name = query_seg[0..eq_pos];
@@ -43,7 +47,7 @@ pub fn router(request: Request) !Response {
 
     if (has_query) |query_pos| {
         req_path = request.head.target[0..query_pos];
-        const query_str = request.head.target[query_pos + 1..];
+        const query_str = request.head.target[query_pos + 1 ..];
         query_params = parse_query_params(query_str, query_buf[0..]);
     }
 
@@ -74,6 +78,11 @@ pub fn router(request: Request) !Response {
                 const req_seg = req_path_segs.next() orelse continue :route_loop;
 
                 if (route_seg.len > 0 and route_seg[0] == ':') {
+                    if (param_count >= param_buf.len) {
+                        std.log.err("Max route params {} exceeded", .{param_buf.len});
+                        continue :route_loop;
+                    }
+
                     param_buf[param_count] = .{
                         .name = route_seg[1..],
                         .value = req_seg,
