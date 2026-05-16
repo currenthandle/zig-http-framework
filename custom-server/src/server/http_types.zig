@@ -9,8 +9,13 @@ pub const Response = struct {
     headers: Headers,
     body: []const u8,
 };
+pub const RouteParam = struct {
+    name: u8,
+    value: u8,
+};
+pub const RouteParams = []const RouteParam;
 pub const Route = struct {
     target: []const u8,
     method: std.http.Method,
-    handler: *const fn () anyerror!Response,
+    handler: *const fn (RouteParams) anyerror!Response,
 };

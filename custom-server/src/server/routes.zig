@@ -5,6 +5,7 @@ const Method = http_types.Method;
 const route_handlers = @import("route_handlers.zig");
 const get_root = route_handlers.get_root;
 const get_name = route_handlers.get_name;
+const get_user_age = route_handlers.get_user_age;
 
 pub const routes: []const Route = &.{
     .{
@@ -16,5 +17,10 @@ pub const routes: []const Route = &.{
         .target = "/name",
         .method = Method.GET,
         .handler = get_name,
+    },
+    .{
+        .target = "/person/:age",
+        .method = Method.GET,
+        .handler = get_user_age,
     },
 };

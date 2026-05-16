@@ -10,15 +10,30 @@ const get_name = route_handlers.get_name;
 const Request = http_types.Request;
 const Response = http_types.Response;
 const Status = http_types.Status;
+const RouteParam = http_types.RouteParam;
 
 pub fn router(request: Request) !Response {
-    const target = request.head.target;
-    const method = request.head.method;
-
-
     for (routes) |route| {
-        if (route.method == method and std.mem.eql(u8, route.target, target)) {
-            return route.handler();
+        if (route.method == request.head.method) {
+            const req_path_segs = std.mem.splitScalar(u8, request.head.target, '/');
+            const route_path_segs = std.mem.splitScalar(u8, route.target, '/');
+
+            // why page allocator
+            var route_params = std.ArrayList(http_types.RouteParam).init(std.heap.page_allocator);
+            defer route_params.deinit();
+
+            while (route_path_segs.next()) |route_seg| {
+                const req_seg = req_path_segs.next() orelse break;
+
+                if (route_seg[0] == ':' and route_seg.len > 0) {
+                    try route_params.append(.{ .name = route_seg[1..], .value = req_seg });
+                    // try route_params.append(req_seg);
+                    continue;
+                }
+
+                if (std.mem.eql(u8, route_seg, req_seg)) break;
+            }
+            return route.handler(route_params.items);
         }
     }
 
