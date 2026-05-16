@@ -39,11 +39,11 @@ fn parse_query_params(query_str: []const u8, buf: []Param) []const Param {
 }
 
 pub fn router(request: Request) !Response {
-    var query_buf: [24]Param = undefined;
-    const has_query = std.mem.indexOfScalar(u8, request.head.target, '?');
-
     var req_path: []const u8 = request.head.target;
     var query_params: []const Param = &.{};
+
+    var query_buf: [24]Param = undefined;
+    const has_query = std.mem.indexOfScalar(u8, request.head.target, '?');
 
     if (has_query) |query_pos| {
         req_path = request.head.target[0..query_pos];
@@ -51,10 +51,10 @@ pub fn router(request: Request) !Response {
         query_params = parse_query_params(query_str, query_buf[0..]);
     }
 
-    for (query_params) |param| {
-        std.log.debug("Name: {s}", .{param.name});
-        std.log.debug("Value: {s}", .{param.value});
-    }
+    // for (query_params) |param| {
+    //     std.log.debug("Name: {s}", .{param.name});
+    //     std.log.debug("Value: {s}", .{param.value});
+    // }
 
     route_loop: for (routes) |route| {
         if (route.method == request.head.method) {
@@ -88,7 +88,6 @@ pub fn router(request: Request) !Response {
                         .value = req_seg,
                     };
                     param_count += 1;
-                    // try route_params.append(req_seg);
                     continue;
                 }
 
