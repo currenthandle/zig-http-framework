@@ -13,37 +13,70 @@ const Status = http_types.Status;
 const Param = http_types.Param;
 // const Params = http_types.Params;
 
-fn parse_query_params(target: []const u8, buf: []Param) []const Param {
-    const has_query = std.mem.indexOfScalar(u8, target, '?');
-    if (has_query) |query_pos| {
-        const query_str = target[query_pos + 1 ..];
+fn parse_query_params(query_str: []const u8, buf: []Param) []const Param {
+    var query_segs = std.mem.splitScalar(u8, query_str, '&');
 
-        var query_segs = std.mem.splitScalar(u8, query_str, '&');
+    var param_pos: usize = 0;
 
-        var param_pos: usize = 0;
+    while (query_segs.next()) |query_seg| {
+        const has_eq = std.mem.indexOfScalar(u8, query_seg, '=');
+        if (has_eq) |eq_pos| {
+            const name = query_seg[0..eq_pos];
+            const value = query_seg[eq_pos + 1 ..];
 
-        while (query_segs.next()) |query_seg| {
-            const has_eq = std.mem.indexOfScalar(u8, query_seg, '=');
-            if (has_eq) |eq_pos| {
-                const name = query_seg[0..eq_pos];
-                const value = query_seg[eq_pos + 1 ..];
-
-                buf[param_pos] = .{
-                    .name = name,
-                    .value = value,
-                };
-                param_pos += 1;
-            }
+            buf[param_pos] = .{
+                .name = name,
+                .value = value,
+            };
+            param_pos += 1;
         }
-        return buf[0..param_pos];
     }
-    return &.{};
+    return buf[0..param_pos];
 }
 
 pub fn router(request: Request) !Response {
     var query_buf: [24]Param = undefined;
+    const has_query = std.mem.indexOfScalar(u8, request.head.target, '?');
 
-    const query_params = parse_query_params(request.head.target, query_buf[0..]);
+    var req_path: []const u8 = request.head.target;
+    var query_params: []const Param = &.{};
+
+    if (has_query) |query_pos| {
+        req_path = request.head.target[0..query_pos];
+        const query_str = request.head.target[query_pos + 1..];
+        query_params = parse_query_params(query_str, query_buf[0..]);
+    }
+    // const q: struct { req_path: []const u8, query_params: []const Param } = blk: {
+    //     if (has_query) |query_pos| {
+    //         const req_path = request.head.target[0..query_pos];
+    //         const query_str = request.head.target[query_pos + 1 ..];
+    //         const query_params = parse_query_params(query_str, query_buf[0..]);
+    //         break :blk .{
+    //             .req_path = req_path,
+    //             .query_params = query_params,
+    //         };
+    //     }
+    //     break :blk .{
+    //         .req_path = request.head.target,
+    //         .query_params = &.{},
+    //     };
+    // };
+    // const req_path = q.req_path;
+    // const query_params = q.query_params;
+
+    // const query_pos = std.mem.indexOfScalar(u8, request.head.target, '?') orelse request.head.target.len;
+    //
+    // const req_path = request.head.target[0..query_pos];
+    // const query_str = request.head.target[query_pos + 1 ..];
+    //
+    // const query_params = blk: {
+    //     if (query_pos == request.head.target.len) {
+    //         break :blk &.{};
+    //     }
+    //
+    //     break :blk parse_query_params(query_str, query_buf[0..]);
+    // };
+
     for (query_params) |param| {
         std.log.debug("Name: {s}", .{param.name});
         std.log.debug("Value: {s}", .{param.value});
@@ -51,7 +84,7 @@ pub fn router(request: Request) !Response {
 
     route_loop: for (routes) |route| {
         if (route.method == request.head.method) {
-            var req_path_segs = std.mem.splitScalar(u8, request.head.target, '/');
+            var req_path_segs = std.mem.splitScalar(u8, req_path, '/');
             var route_path_segs = std.mem.splitScalar(u8, route.target, '/');
 
             // var debug_req_path_segs = std.mem.splitScalar(u8, request.head.target, '/');
