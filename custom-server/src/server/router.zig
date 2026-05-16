@@ -13,14 +13,13 @@ const Status = http_types.Status;
 const Param = http_types.Param;
 // const Params = http_types.Params;
 
-fn parse_query_params(target: []const u8) []const Param {
+fn parse_query_params(target: []const u8, buf: []Param) []const Param {
     const has_query = std.mem.indexOfScalar(u8, target, '?');
     if (has_query) |query_pos| {
         const query_str = target[query_pos + 1 ..];
 
         var query_segs = std.mem.splitScalar(u8, query_str, '&');
 
-        var param_buf: [24]Param = undefined;
         var param_pos: usize = 0;
 
         while (query_segs.next()) |query_seg| {
@@ -29,20 +28,22 @@ fn parse_query_params(target: []const u8) []const Param {
                 const name = query_seg[0..eq_pos];
                 const value = query_seg[eq_pos + 1 ..];
 
-                param_buf[param_pos] = .{
+                buf[param_pos] = .{
                     .name = name,
                     .value = value,
                 };
                 param_pos += 1;
             }
         }
-        return param_buf[0..param_pos];
+        return buf[0..param_pos];
     }
     return &.{};
 }
 
 pub fn router(request: Request) !Response {
-    const query_params = parse_query_params(request.head.target);
+    var query_buf: [24]Param = undefined;
+
+    const query_params = parse_query_params(request.head.target, query_buf[0..]);
     for (query_params) |param| {
         std.log.debug("Name: {s}", .{param.name});
         std.log.debug("Value: {s}", .{param.value});
