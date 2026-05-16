@@ -38,6 +38,6 @@ pub fn get_user_age(params: RouteParams) !Response {
                 .value = "text/plain",
             },
         },
-        .body = "Casey" + params[0].value,
+        .body = params[0].value,
     };
 }

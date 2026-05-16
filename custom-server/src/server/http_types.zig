@@ -10,8 +10,8 @@ pub const Response = struct {
     body: []const u8,
 };
 pub const RouteParam = struct {
-    name: u8,
-    value: u8,
+    name: []const u8,
+    value: []const u8,
 };
 pub const RouteParams = []const RouteParam;
 pub const Route = struct {

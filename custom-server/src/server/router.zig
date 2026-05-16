@@ -15,18 +15,21 @@ const RouteParam = http_types.RouteParam;
 pub fn router(request: Request) !Response {
     for (routes) |route| {
         if (route.method == request.head.method) {
-            const req_path_segs = std.mem.splitScalar(u8, request.head.target, '/');
-            const route_path_segs = std.mem.splitScalar(u8, route.target, '/');
+            var req_path_segs = std.mem.splitScalar(u8, request.head.target, '/');
+            var route_path_segs = std.mem.splitScalar(u8, route.target, '/');
 
             // why page allocator
-            var route_params = std.ArrayList(http_types.RouteParam).init(std.heap.page_allocator);
-            defer route_params.deinit();
+            var route_params: std.ArrayList(RouteParam) = .empty;
+            defer route_params.deinit(std.heap.page_allocator);
 
             while (route_path_segs.next()) |route_seg| {
                 const req_seg = req_path_segs.next() orelse break;
 
                 if (route_seg[0] == ':' and route_seg.len > 0) {
-                    try route_params.append(.{ .name = route_seg[1..], .value = req_seg });
+                    try route_params.append(std.heap.page_allocator, .{
+                        .name = route_seg[1..],
+                        .value = req_seg,
+                    });
                     // try route_params.append(req_seg);
                     continue;
                 }
