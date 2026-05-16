@@ -18,7 +18,6 @@ pub fn router(request: Request) !Response {
             var req_path_segs = std.mem.splitScalar(u8, request.head.target, '/');
             var route_path_segs = std.mem.splitScalar(u8, route.target, '/');
 
-            // why page allocator
             var param_buf: [8]RouteParam = undefined;
             var param_count: usize = 0;
 
