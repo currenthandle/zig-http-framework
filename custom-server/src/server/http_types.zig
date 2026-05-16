@@ -30,3 +30,10 @@ pub const Route = struct {
     method: Method,
     handler: RouteHandler,
 };
+
+pub fn param(params: []const Param, name: []const u8) ?[]const u8 {
+    for (params) |p| {
+        if (std.mem.eql(u8, p.name, name)) return p.value;
+    }
+    return null;
+}
