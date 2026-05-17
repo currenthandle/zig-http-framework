@@ -8,6 +8,7 @@ pub const Response = struct {
     status: Status,
     headers: Headers,
     body: []const u8,
+    allocator: ?std.mem.Allocator = null,
 };
 
 // General for route params and query params
@@ -22,6 +23,7 @@ pub const HandlerContext = struct {
     route_params: Params,
     query_params: Params,
     body: []const u8,
+    allocator: std.mem.Allocator,
 };
 
 pub const RouteHandler = *const fn (HandlerContext) anyerror!Response;

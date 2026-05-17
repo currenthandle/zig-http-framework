@@ -6,6 +6,7 @@ const route_handlers = @import("route_handlers.zig");
 const get_root = route_handlers.get_root;
 const get_name = route_handlers.get_name;
 const get_user_age = route_handlers.get_user_age;
+const add_user = route_handlers.add_user;
 
 pub const routes: []const Route = &.{
     .{
@@ -22,5 +23,10 @@ pub const routes: []const Route = &.{
         .path = "/person/:age",
         .method = Method.GET,
         .handler = get_user_age,
+    },
+    .{
+        .path = "/user",
+        .method = Method.POST,
+        .handler = add_user,
     },
 };

@@ -1,7 +1,9 @@
 const std = @import("std");
 const net = std.Io.net;
 
-const router = @import("router.zig").router;
+const r = @import("router.zig");
+const router = r.router;
+const RequestCtx = r.RequestCtx;
 
 const b = @import("body.zig");
 const read_request_body = b.read_request_body;
@@ -32,15 +34,23 @@ pub fn handle_connection(io: std.Io, stream: net.Stream) !void {
             },
         };
 
+        var req_ctx: RequestCtx = .{
+            .target = request.head.target,
+            .method = request.head.method,
+            .body = undefined,
+        };
+
         const body = try read_request_body(
             std.heap.page_allocator,
             &request,
             max_body_bytes,
             body_io_buf[0..],
         );
+
+        req_ctx.body = body;
         defer std.heap.page_allocator.free(body);
 
-        const response = router(request, body) catch |err| {
+        const response = router(req_ctx) catch |err| {
             std.log.err("Routing error: {s}", .{@errorName(err)});
             return err;
         };
@@ -55,6 +65,10 @@ pub fn handle_connection(io: std.Io, stream: net.Stream) !void {
             std.log.err("Response error: {s}", .{@errorName(err)});
             return err;
         };
+
+        if (response.allocator) |allocator| {
+            allocator.free(response.body);
+        }
 
         if (!keep_alive) break;
     }

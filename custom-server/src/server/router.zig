@@ -12,7 +12,14 @@ const Response = http_types.Response;
 const Status = http_types.Status;
 const Param = http_types.Param;
 const Route = http_types.Route;
+const Method = http_types.Method;
+
 const RouteHandler = http_types.RouteHandler;
+pub const RequestCtx = struct {
+    body: []const u8,
+    target: []const u8,
+    method: Method,
+};
 
 const responses = @import("responses.zig");
 const not_found = responses.not_found;
@@ -41,17 +48,17 @@ fn parse_query_params(query_str: []const u8, buf: []Param) ![]const Param {
     return buf[0..param_pos];
 }
 
-pub fn router(request: Request, body: []const u8) !Response {
-    var req_path: []const u8 = request.head.target;
+pub fn router(ctx: RequestCtx) !Response {
+    var req_path: []const u8 = ctx.target;
     var query_params: []const Param = &.{};
 
     var route_buf: [8]Param = undefined;
     var query_buf: [24]Param = undefined;
-    const has_query = std.mem.indexOfScalar(u8, request.head.target, '?');
+    const has_query = std.mem.indexOfScalar(u8, ctx.target, '?');
 
     if (has_query) |query_pos| {
-        req_path = request.head.target[0..query_pos];
-        const query_str = request.head.target[query_pos + 1 ..];
+        req_path = ctx.target[0..query_pos];
+        const query_str = ctx.target[query_pos + 1 ..];
         query_params = parse_query_params(query_str, query_buf[0..]) catch {
             return bad_request("Max query params exceeded");
         };
@@ -66,7 +73,7 @@ pub fn router(request: Request, body: []const u8) !Response {
     var route_params: []const Param = &.{};
     var route_handler: RouteHandler = undefined;
     for (routes) |route| {
-        if (route.method == request.head.method) {
+        if (route.method == ctx.method) {
             // copied out
             const match = match_route(req_path, route, route_buf[0..]);
             switch (match) {
@@ -79,7 +86,8 @@ pub fn router(request: Request, body: []const u8) !Response {
                     return route_handler(.{
                         .route_params = route_params,
                         .query_params = query_params,
-                        .body = body,
+                        .body = ctx.body,
+                        .allocator = std.heap.page_allocator,
                     });
                 },
             }

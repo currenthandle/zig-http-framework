@@ -49,3 +49,21 @@ pub fn get_user_age(ctx: HandlerContext) !Response {
         .body = param(route_params, "age") orelse "missing",
     };
 }
+
+pub fn add_user(ctx: HandlerContext) !Response {
+    return .{
+        .status = Status.created,
+        .headers = &.{
+            .{
+                .name = "content_type",
+                .value = "text/plain",
+            },
+        },
+        .body = try std.fmt.allocPrint(
+            ctx.allocator,
+            "Created new user {s}",
+            .{ctx.body},
+        ),
+        .allocator = ctx.allocator,
+    };
+}
