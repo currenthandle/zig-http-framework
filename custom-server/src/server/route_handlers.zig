@@ -32,11 +32,11 @@ pub fn get_name(_: HandlerContext) !Response {
 }
 
 pub fn get_user_age(ctx: HandlerContext) !Response {
-    std.log.debug("age!!!", .{});
+    // std.log.debug("age!!!", .{});
     const route_params = ctx.route_params;
-    for (route_params) |p| {
-        std.log.debug("pppppp!!! {s} {s}", .{ p.name, p.value });
-    }
+    // for (route_params) |p| {
+    //     std.log.debug("pppppp!!! {s} {s}", .{ p.name, p.value });
+    // }
     return .{
         .status = Status.ok,
         .headers = &.{

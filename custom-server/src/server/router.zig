@@ -68,25 +68,32 @@ pub fn router(request: Request) !Response {
     for (routes) |route| {
         if (route.method == request.head.method) {
             // copied out
-            const route_ctx = match_route(req_path, route, route_buf[0..]) catch |err| switch (err) {
-                error.RouteNotMatch => continue,
-                error.TooManyRouteParams => return bad_request("Max query params exceeded"),
-            };
+            const match = match_route(req_path, route, route_buf[0..]);
+            switch (match) {
+                .no_match => continue,
+                .too_many_params => return bad_request("Max query params exceeded"),
+                .match => |route_ctx| {
+                    route_params = route_ctx.params;
+                    route_handler = route_ctx.handler;
 
-            route_params = route_ctx.params;
-            route_handler = route_ctx.handler;
-
-            return route_handler(.{
-                .route_params = route_params,
-                .query_params = query_params,
-            });
+                    return route_handler(.{
+                        .route_params = route_params,
+                        .query_params = query_params,
+                    });
+                }
+            }
         }
     }
 
     return not_found();
 }
+const MatchResult = union(enum) {
+    match: struct { handler: RouteHandler, params: []const Param },
+    no_match,
+    too_many_params,
+};
 
-fn match_route(req_path: []const u8, route: Route, buf: []Param) !struct { handler: RouteHandler, params: []const Param } {
+fn match_route(req_path: []const u8, route: Route, buf: []Param) MatchResult {
     var req_path_segs = std.mem.splitScalar(u8, req_path, '/');
     var route_path_segs = std.mem.splitScalar(u8, route.path, '/');
 
@@ -104,10 +111,10 @@ fn match_route(req_path: []const u8, route: Route, buf: []Param) !struct { handl
     var param_count: usize = 0;
 
     while (route_path_segs.next()) |route_seg| {
-        const req_seg = req_path_segs.next() orelse return error.RouteNotMatch;
+        const req_seg = req_path_segs.next() orelse return MatchResult.no_match;
 
         if (route_seg.len > 0 and route_seg[0] == ':') {
-            if (param_count >= buf.len) return error.TooManyRouteParams;
+            if (param_count >= buf.len) return MatchResult.too_many_params;
 
             buf[param_count] = .{
                 .name = route_seg[1..],
@@ -117,14 +124,16 @@ fn match_route(req_path: []const u8, route: Route, buf: []Param) !struct { handl
             continue;
         }
 
-        if (!std.mem.eql(u8, route_seg, req_seg)) return error.RouteNotMatch;
+        if (!std.mem.eql(u8, route_seg, req_seg)) return MatchResult.no_match;
     }
-    if (req_path_segs.next() != null) return error.RouteNotMatch;
+    if (req_path_segs.next() != null) return MatchResult.no_match;
     const route_params = buf[0..param_count];
 
     return .{
-        .handler = route.handler,
-        .params = route_params,
+        .match = .{
+            .handler = route.handler,
+            .params = route_params,
+        },
     };
 
     // return route.handler(.{
