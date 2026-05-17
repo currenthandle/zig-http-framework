@@ -21,6 +21,7 @@ pub const Params = []const Param;
 pub const HandlerContext = struct {
     route_params: Params,
     query_params: Params,
+    body: []const u8,
 };
 
 pub const RouteHandler = *const fn (HandlerContext) anyerror!Response;

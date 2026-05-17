@@ -41,7 +41,7 @@ fn parse_query_params(query_str: []const u8, buf: []Param) ![]const Param {
     return buf[0..param_pos];
 }
 
-pub fn router(request: Request) !Response {
+pub fn router(request: Request, body: []const u8) !Response {
     var req_path: []const u8 = request.head.target;
     var query_params: []const Param = &.{};
 
@@ -79,6 +79,7 @@ pub fn router(request: Request) !Response {
                     return route_handler(.{
                         .route_params = route_params,
                         .query_params = query_params,
+                        .body = body,
                     });
                 },
             }
@@ -141,4 +142,3 @@ fn match_route(req_path: []const u8, route: Route, buf: []Param) MatchResult {
     //     .query_params = query_params,
     // });
 }
-

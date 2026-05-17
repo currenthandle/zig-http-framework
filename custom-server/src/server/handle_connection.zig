@@ -40,7 +40,7 @@ pub fn handle_connection(io: std.Io, stream: net.Stream) !void {
         );
         defer std.heap.page_allocator.free(body);
 
-        const response = router(request) catch |err| {
+        const response = router(request, body) catch |err| {
             std.log.err("Routing error: {s}", .{@errorName(err)});
             return err;
         };
