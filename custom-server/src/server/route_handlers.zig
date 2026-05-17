@@ -1,3 +1,4 @@
+const std = @import("std");
 const http_types = @import("http_types.zig");
 const Response = http_types.Response;
 const Status = http_types.Status;
@@ -31,7 +32,11 @@ pub fn get_name(_: HandlerContext) !Response {
 }
 
 pub fn get_user_age(ctx: HandlerContext) !Response {
+    std.log.debug("age!!!", .{});
     const route_params = ctx.route_params;
+    for (route_params) |p| {
+        std.log.debug("pppppp!!! {s} {s}", .{ p.name, p.value });
+    }
     return .{
         .status = Status.ok,
         .headers = &.{
