@@ -71,7 +71,7 @@ pub fn router(request: Request) !Response {
             const match = match_route(req_path, route, route_buf[0..]);
             switch (match) {
                 .no_match => continue,
-                .too_many_params => return bad_request("Max query params exceeded"),
+                .too_many_params => return bad_request("Max route params exceeded"),
                 .match => |route_ctx| {
                     route_params = route_ctx.params;
                     route_handler = route_ctx.handler;
@@ -80,7 +80,7 @@ pub fn router(request: Request) !Response {
                         .route_params = route_params,
                         .query_params = query_params,
                     });
-                }
+                },
             }
         }
     }
