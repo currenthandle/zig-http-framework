@@ -3,6 +3,9 @@ const net = std.Io.net;
 
 const router = @import("router.zig").router;
 
+const b = @import("body.zig");
+const read_request_body = b.read_request_body;
+
 pub fn handle_connection(io: std.Io, stream: net.Stream) !void {
     defer stream.close(io);
 
@@ -17,6 +20,8 @@ pub fn handle_connection(io: std.Io, stream: net.Stream) !void {
         &connection_writer.interface,
     );
 
+    const max_body_bytes: usize = 1024 * 1024;
+    var body_io_buf: [4096]u8 = undefined;
     while (true) {
         var request = http_server.receiveHead() catch |err| switch (err) {
             error.HttpConnectionClosing, error.HttpRequestTruncated, error.ReadFailed => break,
@@ -26,6 +31,14 @@ pub fn handle_connection(io: std.Io, stream: net.Stream) !void {
                 return err;
             },
         };
+
+        const body = try read_request_body(
+            std.heap.page_allocator,
+            &request,
+            max_body_bytes,
+            body_io_buf[0..],
+        );
+        defer std.heap.page_allocator.free(body);
 
         const response = router(request) catch |err| {
             std.log.err("Routing error: {s}", .{@errorName(err)});
