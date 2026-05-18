@@ -17,8 +17,12 @@ pub const Param = struct {
     value: []const u8,
 };
 pub const Params = []const Param;
-// pub const RequestParams = []const Param;
-// pub const QueryParams = []const Param;
+
+pub const RequestCtx = struct {
+    body: []const u8,
+    target: []const u8,
+    method: Method,
+};
 pub const HandlerCtx = struct {
     route_params: Params,
     query_params: Params,

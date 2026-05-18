@@ -13,13 +13,9 @@ const Status = http_types.Status;
 const Param = http_types.Param;
 const Route = http_types.Route;
 const Method = http_types.Method;
+const RequestCtx= http_types.RequestCtx;
 
 const RouteHandler = http_types.RouteHandler;
-pub const RequestCtx = struct {
-    body: []const u8,
-    target: []const u8,
-    method: Method,
-};
 
 const responses = @import("responses.zig");
 const not_found = responses.not_found;

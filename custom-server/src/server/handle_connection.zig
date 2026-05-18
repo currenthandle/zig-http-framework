@@ -1,9 +1,10 @@
 const std = @import("std");
 const net = std.Io.net;
 
+const RequestCtx = @import("http_types.zig").RequestCtx;
+
 const r = @import("router.zig");
 const router = r.router;
-const RequestCtx = r.RequestCtx;
 
 const b = @import("body.zig");
 const read_request_body = b.read_request_body;
