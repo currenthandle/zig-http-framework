@@ -7,7 +7,7 @@ const r = @import("router.zig");
 const router = r.router;
 
 const b = @import("body.zig");
-const read_request_body = b.read_request_body;
+const read_req_body = b.read_req_body;
 
 pub fn handle_connection(io: std.Io, stream: net.Stream) !void {
     defer stream.close(io);
@@ -26,7 +26,7 @@ pub fn handle_connection(io: std.Io, stream: net.Stream) !void {
     const max_body_bytes: usize = 1024 * 1024;
     var body_io_buf: [4096]u8 = undefined;
     while (true) {
-        var request = http_server.receiveHead() catch |err| switch (err) {
+        var req = http_server.receiveHead() catch |err| switch (err) {
             error.HttpConnectionClosing, error.HttpRequestTruncated, error.ReadFailed => break,
 
             else => {
@@ -36,14 +36,14 @@ pub fn handle_connection(io: std.Io, stream: net.Stream) !void {
         };
 
         var req_ctx: RequestCtx = .{
-            .target = request.head.target,
-            .method = request.head.method,
+            .target = req.head.target,
+            .method = req.head.method,
             .body = undefined,
         };
 
-        const body = try read_request_body(
+        const body = try read_req_body(
             std.heap.page_allocator,
-            &request,
+            &req,
             max_body_bytes,
             body_io_buf[0..],
         );
@@ -56,9 +56,9 @@ pub fn handle_connection(io: std.Io, stream: net.Stream) !void {
             return err;
         };
 
-        const keep_alive = request.head.keep_alive;
+        const keep_alive = req.head.keep_alive;
 
-        request.respond(response.body, .{
+        req.respond(response.body, .{
             .keep_alive = keep_alive,
             .extra_headers = response.headers,
             .status = response.status,
