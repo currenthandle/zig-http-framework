@@ -1,15 +1,9 @@
 const std = @import("std");
 
 const http_types = @import("http_types.zig");
-const route_handlers = @import("route_handlers.zig");
 const routes = @import("routes.zig").routes;
 
-const get_root = route_handlers.get_root;
-const get_name = route_handlers.get_name;
-
-const Request = http_types.Request;
 const Response = http_types.Response;
-const Status = http_types.Status;
 const Param = http_types.Param;
 const Route = http_types.Route;
 const Method = http_types.Method;
