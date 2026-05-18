@@ -25,6 +25,7 @@ pub fn handle_connection(io: std.Io, stream: net.Stream) !void {
 
     const max_body_bytes: usize = 1024 * 1024;
     var body_reader_buf: [4096]u8 = undefined;
+
     while (true) {
         var req = http_server.receiveHead() catch |err| switch (err) {
             error.HttpConnectionClosing, error.HttpRequestTruncated, error.ReadFailed => break,
@@ -39,7 +40,7 @@ pub fn handle_connection(io: std.Io, stream: net.Stream) !void {
         defer req_arena.deinit();
         const req_allocator = req_arena.allocator();
 
-        // save target and method before read_req_body (req.readerExpectNone) poisions request /  request headers
+        // save target and method before read_req_body (req.readerExpectNone) poisons request /  request headers
         const req_target = req.head.target;
         const req_method = req.head.method;
 

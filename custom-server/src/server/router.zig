@@ -54,16 +54,13 @@ pub fn router(ctx: RequestCtx) !Response {
         };
     }
 
-    // route_loop: for (routes) |route| {
     for (routes) |route| {
         if (route.method == ctx.method) {
-            // copied out
             const match = match_route(req_path, route, route_buf[0..]);
             switch (match) {
                 .no_match => continue,
                 .too_many_params => return bad_request("Max route params exceeded"),
                 .match => |route_ctx| {
-
                     return route_ctx.handler(.{
                         .route_params = route_ctx.params,
                         .query_params = query_params,

@@ -42,7 +42,6 @@ pub fn get_user_age(ctx: HandlerCtx) !Response {
                 .value = "text/plain",
             },
         },
-        // .body = route_params[0].value,
         .body = param(route_params, "age") orelse "missing",
     };
 }
