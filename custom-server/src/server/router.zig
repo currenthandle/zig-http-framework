@@ -54,11 +54,6 @@ pub fn router(ctx: RequestCtx) !Response {
         };
     }
 
-    // for (query_params) |param| {
-    //     std.log.debug("Name: {s}", .{param.name});
-    //     std.log.debug("Value: {s}", .{param.value});
-    // }
-
     // route_loop: for (routes) |route| {
     for (routes) |route| {
         if (route.method == ctx.method) {
@@ -92,17 +87,6 @@ fn match_route(req_path: []const u8, route: Route, buf: []Param) MatchResult {
     var req_path_segs = std.mem.splitScalar(u8, req_path, '/');
     var route_path_segs = std.mem.splitScalar(u8, route.path, '/');
 
-    // std.log.debug("route.path: {s}\n", .{route.path});
-    // var debug_req_path_segs = std.mem.splitScalar(u8, req_path, '/');
-    // while (debug_req_path_segs.next()) |seg| {
-    //     std.log.debug("req seg: {s}", .{seg});
-    // }
-    //
-    // var debug_route_path_segs = std.mem.splitScalar(u8, route.path, '/');
-    // while (debug_route_path_segs.next()) |seg| {
-    //     std.log.debug("route seg: {s}", .{seg});
-    // }
-
     var param_count: usize = 0;
 
     while (route_path_segs.next()) |route_seg| {
@@ -130,9 +114,4 @@ fn match_route(req_path: []const u8, route: Route, buf: []Param) MatchResult {
             .params = route_params,
         },
     };
-
-    // return route.handler(.{
-    //     .route_params = route_params,
-    //     .query_params = query_params,
-    // });
 }

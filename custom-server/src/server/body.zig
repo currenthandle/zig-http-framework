@@ -22,6 +22,7 @@ pub fn read_request_body(allocator: std.mem.Allocator, req: *Request, max_bytes:
     return try allocator.alloc(u8, 0);
 }
 
+// Manully handle body chunks (body chunks / partial reads) for streaming etc.:
 // pub fn read_request_body(allocator: std.mem.Allocator, req: *Request, max_bytes: usize, io_buf: []u8) ![]u8 {
 //     if (!req.head.method.requestHasBody()) {
 //         return try allocator.alloc(u8, 0);
