@@ -11,11 +11,14 @@ pub fn main(init: std.process.Init) !void {
     var server = try address.listen(io, .{ .reuse_address = true });
     std.log.info("Multi-thread server listenting on port {}", .{port});
 
-
     // accept sockets
     while (true) {
         const stream = try server.accept(io);
-        const thread = try std.Thread.spawn(.{}, handle_connection, .{ io, stream });
+        const thread = try std.Thread.spawn(
+            .{},
+            handle_connection,
+            .{ io, stream },
+        );
         thread.detach();
     }
 }
