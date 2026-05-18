@@ -66,8 +66,6 @@ pub fn router(ctx: RequestCtx) !Response {
     // }
 
     // route_loop: for (routes) |route| {
-    var route_params: []const Param = &.{};
-    var route_handler: RouteHandler = undefined;
     for (routes) |route| {
         if (route.method == ctx.method) {
             // copied out
@@ -76,11 +74,9 @@ pub fn router(ctx: RequestCtx) !Response {
                 .no_match => continue,
                 .too_many_params => return bad_request("Max route params exceeded"),
                 .match => |route_ctx| {
-                    route_params = route_ctx.params;
-                    route_handler = route_ctx.handler;
 
-                    return route_handler(.{
-                        .route_params = route_params,
+                    return route_ctx.handler(.{
+                        .route_params = route_ctx.params,
                         .query_params = query_params,
                         .body = ctx.body,
                         .allocator = ctx.allocator,
