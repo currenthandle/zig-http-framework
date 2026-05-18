@@ -22,6 +22,7 @@ pub const RequestCtx = struct {
     body: []const u8,
     target: []const u8,
     method: Method,
+    allocator: std.mem.Allocator,
 };
 pub const HandlerCtx = struct {
     route_params: Params,

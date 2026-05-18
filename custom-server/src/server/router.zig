@@ -83,7 +83,7 @@ pub fn router(ctx: RequestCtx) !Response {
                         .route_params = route_params,
                         .query_params = query_params,
                         .body = ctx.body,
-                        .allocator = std.heap.page_allocator,
+                        .allocator = ctx.allocator,
                     });
                 },
             }

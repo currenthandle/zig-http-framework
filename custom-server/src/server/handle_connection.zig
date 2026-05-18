@@ -35,21 +35,25 @@ pub fn handle_connection(io: std.Io, stream: net.Stream) !void {
             },
         };
 
+        var req_arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+        defer req_arena.deinit();
+        const req_allocator = req_arena.allocator();
+
         var req_ctx: RequestCtx = .{
             .target = req.head.target,
             .method = req.head.method,
             .body = undefined,
+            .allocator = req_allocator,
         };
 
         const body = try read_req_body(
-            std.heap.page_allocator,
+            req_allocator,
             &req,
             max_body_bytes,
             body_io_buf[0..],
         );
 
         req_ctx.body = body;
-        defer std.heap.page_allocator.free(body);
 
         const response = router(req_ctx) catch |err| {
             std.log.err("Routing error: {s}", .{@errorName(err)});
@@ -66,10 +70,6 @@ pub fn handle_connection(io: std.Io, stream: net.Stream) !void {
             std.log.err("Response error: {s}", .{@errorName(err)});
             return err;
         };
-
-        if (response.allocator) |allocator| {
-            allocator.free(response.body);
-        }
 
         if (!keep_alive) break;
     }
