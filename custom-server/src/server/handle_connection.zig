@@ -7,7 +7,7 @@ const r = @import("router.zig");
 const router = r.router;
 
 const b = @import("body.zig");
-const read_req_body = b.read_req_body;
+const read_request_body = b.read_request_body;
 
 pub fn handle_connection(io: std.Io, stream: net.Stream) !void {
     defer stream.close(io);
@@ -24,7 +24,7 @@ pub fn handle_connection(io: std.Io, stream: net.Stream) !void {
     );
 
     const max_body_bytes: usize = 1024 * 1024;
-    var body_io_buf: [4096]u8 = undefined;
+    var body_reader_buf: [4096]u8 = undefined;
     while (true) {
         var req = http_server.receiveHead() catch |err| switch (err) {
             error.HttpConnectionClosing, error.HttpRequestTruncated, error.ReadFailed => break,
@@ -43,11 +43,11 @@ pub fn handle_connection(io: std.Io, stream: net.Stream) !void {
         const req_target = req.head.target;
         const req_method = req.head.method;
 
-        const req_body = try read_req_body(
+        const req_body = try read_request_body(
             req_allocator,
             &req,
             max_body_bytes,
-            body_io_buf[0..],
+            body_reader_buf[0..],
         );
 
         const req_ctx: RequestCtx = .{
