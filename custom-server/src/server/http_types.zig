@@ -8,7 +8,6 @@ pub const Response = struct {
     status: Status,
     headers: Headers,
     body: []const u8,
-    allocator: ?std.mem.Allocator = null,
 };
 
 // General for route params and query params

@@ -64,6 +64,5 @@ pub fn add_user(ctx: HandlerCtx) !Response {
             "Created new user {s}",
             .{ctx.body},
         ),
-        .allocator = ctx.allocator,
     };
 }
