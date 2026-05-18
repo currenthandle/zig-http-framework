@@ -2,10 +2,10 @@ const std = @import("std");
 const http_types = @import("http_types.zig");
 const Response = http_types.Response;
 const Status = http_types.Status;
-const HandlerContext = http_types.HandlerContext;
+const HandlerCtx = http_types.HandlerCtx;
 const param = http_types.param;
 
-pub fn get_root(_: HandlerContext) !Response {
+pub fn get_root(_: HandlerCtx) !Response {
     return .{
         .status = Status.ok,
         .headers = &.{
@@ -18,7 +18,7 @@ pub fn get_root(_: HandlerContext) !Response {
     };
 }
 
-pub fn get_name(_: HandlerContext) !Response {
+pub fn get_name(_: HandlerCtx) !Response {
     return .{
         .status = Status.ok,
         .headers = &.{
@@ -31,7 +31,7 @@ pub fn get_name(_: HandlerContext) !Response {
     };
 }
 
-pub fn get_user_age(ctx: HandlerContext) !Response {
+pub fn get_user_age(ctx: HandlerCtx) !Response {
     // std.log.debug("age!!!", .{});
     const route_params = ctx.route_params;
     // for (route_params) |p| {
@@ -50,7 +50,7 @@ pub fn get_user_age(ctx: HandlerContext) !Response {
     };
 }
 
-pub fn add_user(ctx: HandlerContext) !Response {
+pub fn add_user(ctx: HandlerCtx) !Response {
     return .{
         .status = Status.created,
         .headers = &.{

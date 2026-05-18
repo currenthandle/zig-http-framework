@@ -19,14 +19,14 @@ pub const Param = struct {
 pub const Params = []const Param;
 // pub const RequestParams = []const Param;
 // pub const QueryParams = []const Param;
-pub const HandlerContext = struct {
+pub const HandlerCtx = struct {
     route_params: Params,
     query_params: Params,
     body: []const u8,
     allocator: std.mem.Allocator,
 };
 
-pub const RouteHandler = *const fn (HandlerContext) anyerror!Response;
+pub const RouteHandler = *const fn (HandlerCtx) anyerror!Response;
 
 pub const Route = struct {
     path: []const u8,
