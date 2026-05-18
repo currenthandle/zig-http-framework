@@ -33,6 +33,7 @@ pub fn get_name(_: HandlerCtx) !Response {
 
 pub fn get_user_age(ctx: HandlerCtx) !Response {
     const route_params = ctx.route_params;
+
     return .{
         .status = Status.ok,
         .headers = &.{
