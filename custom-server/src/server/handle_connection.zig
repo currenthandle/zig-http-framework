@@ -39,21 +39,23 @@ pub fn handle_connection(io: std.Io, stream: net.Stream) !void {
         defer req_arena.deinit();
         const req_allocator = req_arena.allocator();
 
-        var req_ctx: RequestCtx = .{
-            .target = req.head.target,
-            .method = req.head.method,
-            .body = undefined,
-            .allocator = req_allocator,
-        };
+        // save target and method before read_req_body (req.readerExpectNone) poisions request /  request headers
+        const req_target = req.head.target;
+        const req_method = req.head.method;
 
-        const body = try read_req_body(
+        const req_body = try read_req_body(
             req_allocator,
             &req,
             max_body_bytes,
             body_io_buf[0..],
         );
 
-        req_ctx.body = body;
+        const req_ctx: RequestCtx = .{
+            .target = req_target,
+            .method = req_method,
+            .body = req_body,
+            .allocator = req_allocator,
+        };
 
         const response = router(req_ctx) catch |err| {
             std.log.err("Routing error: {s}", .{@errorName(err)});
