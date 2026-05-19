@@ -18,24 +18,24 @@ const bad_request = responses.bad_request;
 fn parse_query_params(query_str: []const u8, buf: []Param) ![]const Param {
     var query_segs = std.mem.splitScalar(u8, query_str, '&');
 
-    var param_pos: usize = 0;
+    var param_count: usize = 0;
 
     while (query_segs.next()) |query_seg| {
-        if (param_pos >= buf.len) return error.TooManyQueryParams;
+        if (param_count >= buf.len) return error.TooManyQueryParams;
 
         const has_eq = std.mem.indexOfScalar(u8, query_seg, '=');
         if (has_eq) |eq_pos| {
             const name = query_seg[0..eq_pos];
             const value = query_seg[eq_pos + 1 ..];
 
-            buf[param_pos] = .{
+            buf[param_count] = .{
                 .name = name,
                 .value = value,
             };
-            param_pos += 1;
+            param_count += 1;
         }
     }
-    return buf[0..param_pos];
+    return buf[0..param_count];
 }
 
 pub fn router(ctx: RequestCtx) !Response {
@@ -55,25 +55,26 @@ pub fn router(ctx: RequestCtx) !Response {
     }
 
     for (routes) |route| {
-        if (route.method == ctx.method) {
-            const match = match_route(req_path, route, route_buf[0..]);
-            switch (match) {
-                .no_match => continue,
-                .too_many_params => return bad_request("Max route params exceeded"),
-                .match => |route_ctx| {
-                    return route_ctx.handler(.{
-                        .route_params = route_ctx.params,
-                        .query_params = query_params,
-                        .body = ctx.body,
-                        .allocator = ctx.allocator,
-                    });
-                },
-            }
+        if (route.method != ctx.method) continue;
+
+        const match_result = match_route(req_path, route, route_buf[0..]);
+        switch (match_result) {
+            .no_match => continue,
+            .too_many_params => return bad_request("Max route params exceeded"),
+            .match => |matched_route| {
+                return matched_route.handler(.{
+                    .route_params = matched_route.params,
+                    .query_params = query_params,
+                    .body = ctx.body,
+                    .allocator = ctx.allocator,
+                });
+            },
         }
     }
 
     return not_found();
 }
+
 const MatchResult = union(enum) {
     match: struct { handler: RouteHandler, params: []const Param },
     no_match,
