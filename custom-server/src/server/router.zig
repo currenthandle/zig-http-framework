@@ -38,21 +38,40 @@ fn parse_query_params(query_str: []const u8, buf: []Param) ![]const Param {
     return buf[0..param_count];
 }
 
-pub fn router(ctx: RequestCtx) !Response {
-    var req_path: []const u8 = ctx.target;
+const ParsedTarget = struct {
+    path: []const u8,
+    query_params: []const Param,
+};
+
+fn parse_target(target: []const u8, query_buf: []Param) !ParsedTarget {
+    var req_path: []const u8 = target;
     var query_params: []const Param = &.{};
 
+    const has_query = std.mem.indexOfScalar(u8, target, '?');
+    if (has_query) |query_pos| {
+        req_path = target[0..query_pos];
+        const query_str = target[query_pos + 1 ..];
+        query_params = parse_query_params(query_str, query_buf[0..]) catch {
+            return error.TooManyQueryParams;
+        };
+    }
+
+    return .{
+        .path = req_path,
+        .query_params = query_params,
+    };
+}
+
+pub fn router(ctx: RequestCtx) !Response {
     var route_buf: [8]Param = undefined;
     var query_buf: [24]Param = undefined;
 
-    const has_query = std.mem.indexOfScalar(u8, ctx.target, '?');
-    if (has_query) |query_pos| {
-        req_path = ctx.target[0..query_pos];
-        const query_str = ctx.target[query_pos + 1 ..];
-        query_params = parse_query_params(query_str, query_buf[0..]) catch {
-            return bad_request("Max query params exceeded");
-        };
-    }
+    const parsed_target = parse_target(ctx.target, query_buf[0..]) catch |err| switch (err) {
+        error.TooManyQueryParams => return bad_request("Max query params exceeded"),
+    };
+
+    const req_path = parsed_target.path;
+    const query_params = parsed_target.query_params;
 
     for (routes) |route| {
         if (route.method != ctx.method) continue;
