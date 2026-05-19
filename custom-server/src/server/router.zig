@@ -19,8 +19,8 @@ pub fn router(ctx: RequestCtx) !Response {
     var route_buf: [8]Param = undefined;
     var query_buf: [24]Param = undefined;
 
-    const parsed_target = parse_target(ctx.target, query_buf[0..]) catch |err| switch (err) {
-        error.TooManyQueryParams => return bad_request("Max query params exceeded"),
+    const parsed_target = parse_target(ctx.target, query_buf[0..]) catch {
+        return bad_request("Max query params exceeded");
     };
 
     const req_path = parsed_target.path;
@@ -29,9 +29,10 @@ pub fn router(ctx: RequestCtx) !Response {
     for (routes) |route| {
         if (route.method != ctx.method) continue;
 
-        const match_opt = match_route(req_path, route, route_buf[0..]) catch |err| switch (err) {
-            error.TooManyRouteParams => return bad_request("Max route params exceeded"),
+        const match_opt = match_route(req_path, route, route_buf[0..]) catch {
+            return bad_request("Max route params exceeded");
         };
+
         const matched_route = match_opt orelse continue;
 
         return matched_route.handler(.{
@@ -50,7 +51,9 @@ const ParsedTarget = struct {
     query_params: []const Param,
 };
 
-fn parse_target(target: []const u8, query_buf: []Param) !ParsedTarget {
+const ParamError = error{TooMany};
+
+fn parse_target(target: []const u8, query_buf: []Param) ParamError!ParsedTarget {
     var req_path: []const u8 = target;
     var query_params: []const Param = &.{};
 
@@ -67,13 +70,13 @@ fn parse_target(target: []const u8, query_buf: []Param) !ParsedTarget {
     };
 }
 
-fn parse_query_params(query_str: []const u8, buf: []Param) ![]const Param {
+fn parse_query_params(query_str: []const u8, buf: []Param) ParamError![]const Param {
     var query_segs = std.mem.splitScalar(u8, query_str, '&');
 
     var param_count: usize = 0;
 
     while (query_segs.next()) |query_seg| {
-        if (param_count >= buf.len) return error.TooManyQueryParams;
+        if (param_count >= buf.len) return ParamError.TooMany;
 
         const has_eq = std.mem.indexOfScalar(u8, query_seg, '=');
         if (has_eq) |eq_pos| {
@@ -95,7 +98,7 @@ const Match = struct {
     params: []const Param,
 };
 
-fn match_route(req_path: []const u8, route: Route, buf: []Param) !?Match {
+fn match_route(req_path: []const u8, route: Route, buf: []Param) ParamError!?Match {
     var req_path_segs = std.mem.splitScalar(u8, req_path, '/');
     var route_path_segs = std.mem.splitScalar(u8, route.path, '/');
 
@@ -105,7 +108,7 @@ fn match_route(req_path: []const u8, route: Route, buf: []Param) !?Match {
         const req_seg = req_path_segs.next() orelse return null;
 
         if (route_seg.len > 0 and route_seg[0] == ':') {
-            if (param_count >= buf.len) return error.TooManyRouteParams;
+            if (param_count >= buf.len) return ParamError.TooMany;
 
             buf[param_count] = .{
                 .name = route_seg[1..],
