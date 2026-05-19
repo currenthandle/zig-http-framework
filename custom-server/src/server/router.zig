@@ -44,8 +44,8 @@ pub fn router(ctx: RequestCtx) !Response {
 
     var route_buf: [8]Param = undefined;
     var query_buf: [24]Param = undefined;
-    const has_query = std.mem.indexOfScalar(u8, ctx.target, '?');
 
+    const has_query = std.mem.indexOfScalar(u8, ctx.target, '?');
     if (has_query) |query_pos| {
         req_path = ctx.target[0..query_pos];
         const query_str = ctx.target[query_pos + 1 ..];
