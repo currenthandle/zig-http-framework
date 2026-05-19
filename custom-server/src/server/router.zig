@@ -15,11 +15,11 @@ const responses = @import("responses.zig");
 const not_found = responses.not_found;
 const bad_request = responses.bad_request;
 
-pub fn router(ctx: RequestCtx) !Response {
+pub fn router(req_ctx: RequestCtx) !Response {
     var route_buf: [8]Param = undefined;
     var query_buf: [24]Param = undefined;
 
-    const parsed_target = parse_target(ctx.target, query_buf[0..]) catch {
+    const parsed_target = parse_target(req_ctx.target, query_buf[0..]) catch {
         return bad_request("Max query params exceeded");
     };
 
@@ -27,7 +27,7 @@ pub fn router(ctx: RequestCtx) !Response {
     const query_params = parsed_target.query_params;
 
     for (routes) |route| {
-        if (route.method != ctx.method) continue;
+        if (route.method != req_ctx.method) continue;
 
         const match_opt = match_route(req_path, route, route_buf[0..]) catch {
             return bad_request("Max route params exceeded");
@@ -38,8 +38,8 @@ pub fn router(ctx: RequestCtx) !Response {
         return matched_route.handler(.{
             .route_params = matched_route.params,
             .query_params = query_params,
-            .body = ctx.body,
-            .allocator = ctx.allocator,
+            .body = req_ctx.body,
+            .allocator = req_ctx.allocator,
         });
     }
 
