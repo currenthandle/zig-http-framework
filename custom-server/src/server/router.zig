@@ -7,7 +7,7 @@ const Response = http_types.Response;
 const Param = http_types.Param;
 const Route = http_types.Route;
 const Method = http_types.Method;
-const RequestCtx= http_types.RequestCtx;
+const RequestCtx = http_types.RequestCtx;
 
 const RouteHandler = http_types.RouteHandler;
 
