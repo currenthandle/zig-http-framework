@@ -15,11 +15,9 @@ pub fn get_name(_: HandlerCtx) !Response {
 }
 
 pub fn get_user_age(ctx: HandlerCtx) !Response {
-    const route_params = ctx.route_params;
-
     return resp.text(
         Status.ok,
-        param(route_params, "age") orelse "missing",
+        param(ctx.route_params, "age") orelse "missing",
     );
 }
 
