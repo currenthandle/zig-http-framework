@@ -55,7 +55,8 @@ fn process_request(http_server: *std.http.Server, max_body_bytes: usize, body_re
     defer req_arena.deinit();
     const req_allocator = req_arena.allocator();
 
-    // save target and method before read_req_body (req.readerExpectNone) poisons request /  request headers
+    // save target and method before read_req_body (req.readerExpectNone)
+    // poisons request /  request headers
     const req_target = req.head.target;
     const req_method = req.head.method;
 
