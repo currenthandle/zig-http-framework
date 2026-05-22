@@ -58,7 +58,7 @@ fn process_request(http_server: *std.http.Server, max_body_bytes: usize, body_re
 
     // save target and method before read_req_body (req.readerExpectNone)
     // poisons request /  request headers
-    const req_target = req.head.target;
+    const req_target = try req_allocator.dupe(u8, req.head.target);
     const req_method = req.head.method;
 
     const req_body = try read_request_body(
