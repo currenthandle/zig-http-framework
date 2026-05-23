@@ -31,7 +31,11 @@ pub fn handle_connection(io: std.Io, stream: net.Stream) !void {
 
     var keep_alive = true;
     while (keep_alive) {
-        keep_alive = process_request(&http_server, max_body_bytes, body_reader_buf[0..]) catch |err| switch (err) {
+        keep_alive = process_request(
+            &http_server,
+            max_body_bytes,
+            body_reader_buf[0..],
+        ) catch |err| switch (err) {
             ReceiveHeadError.HttpConnectionClosing,
             ReceiveHeadError.HttpRequestTruncated,
             ReceiveHeadError.ReadFailed,
@@ -49,7 +53,11 @@ pub fn handle_connection(io: std.Io, stream: net.Stream) !void {
     }
 }
 
-fn process_request(http_server: *std.http.Server, max_body_bytes: usize, body_reader_buf: []u8) !bool {
+fn process_request(
+    http_server: *std.http.Server,
+    max_body_bytes: usize,
+    body_reader_buf: []u8,
+) !bool {
     var req = try http_server.receiveHead();
 
     var req_arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
