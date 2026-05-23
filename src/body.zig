@@ -13,20 +13,22 @@ pub fn read_request_body(
         return try allocator.alloc(u8, 0);
     }
     const content_length = req.head.content_length;
-    const tranfer_encoding = req.head.transfer_encoding;
+    const transfer_encoding = req.head.transfer_encoding;
 
-    if (content_length != null and tranfer_encoding != .none) {
-        return error.InvalidBodyFrame;
+    if (content_length != null and transfer_encoding != .none) {
+        return error.InvalidBodyFraming;
     }
     const body_reader = req.readerExpectNone(reader_buf);
     if (content_length) |cl| {
-        return read_content_length_frame(allocator, max_bytes, cl, body_reader);
+        return read_content_length_body(allocator, max_bytes, cl, body_reader);
     }
-    if (tranfer_encoding == .chunked) {}
+    if (transfer_encoding == .chunked) {
+        return read_chunked_body(allocator, max_bytes, body_reader);
+    }
     return try allocator.alloc(u8, 0);
 }
 
-fn read_content_length_frame(
+fn read_content_length_body(
     allocator: std.mem.Allocator,
     max_bytes: usize,
     cl: u64,
@@ -38,11 +40,13 @@ fn read_content_length_frame(
     const body_len: usize = @intCast(cl);
 
     const body = try allocator.alloc(u8, body_len);
+    errdefer allocator.free(body);
+
     try body_reader.readSliceAll(body);
     return body;
 }
 
-fn read_transfer_encoding_frame(
+fn read_chunked_body(
     allocator: std.mem.Allocator,
     max_bytes: usize,
     body_reader: *std.Io.Reader,
