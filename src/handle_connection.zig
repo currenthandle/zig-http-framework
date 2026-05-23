@@ -68,13 +68,32 @@ fn process_request(
     // poisons request /  request headers
     const req_target = try req_allocator.dupe(u8, req.head.target);
     const req_method = req.head.method;
+    const keep_alive = req.head.keep_alive;
 
-    const req_body = try read_request_body(
+    const req_body = read_request_body(
         req_allocator,
         &req,
         max_body_bytes,
         body_reader_buf[0..],
-    );
+    ) catch |err| switch (err) {
+        error.ContentTooLarge => {
+            try req.respond("", .{
+                .keep_alive = keep_alive,
+                .extra_headers = &.{},
+                .status = std.http.Status.payload_too_large,
+            });
+            return keep_alive;
+        },
+        error.InvalidBodyFraming => {
+            try req.respond("", .{
+                .keep_alive = keep_alive,
+                .extra_headers = &.{},
+                .status = std.http.Status.bad_request,
+            });
+            return keep_alive;
+        },
+        else => return err,
+    };
 
     const req_ctx: RequestCtx = .{
         .target = req_target,
@@ -84,7 +103,6 @@ fn process_request(
     };
 
     const response = try router(req_ctx);
-    const keep_alive = req.head.keep_alive;
 
     try req.respond(response.body, .{
         .keep_alive = keep_alive,
