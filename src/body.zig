@@ -42,7 +42,11 @@ fn read_content_length_body(
     const body = try allocator.alloc(u8, body_len);
     errdefer allocator.free(body);
 
-    try body_reader.readSliceAll(body);
+    body_reader.readSliceAll(body) catch |err| switch (err) {
+        // Content-Length said N bytes, but we could not read N bytes
+        error.EndOfStream => return error.BodyTruncated,
+        error.ReadFailed => return error.BodyReadFailed,
+    };
     return body;
 }
 
@@ -55,7 +59,9 @@ fn read_chunked_body(
     var body_storage: std.ArrayList(u8) = .empty;
     defer body_storage.deinit(allocator);
     while (true) {
-        const n = try body_reader.readSliceShort(tmp_buf[0..]);
+        const n = body_reader.readSliceShort(tmp_buf[0..]) catch |err| switch (err) {
+            error.ReadFailed => return error.InvalidChunkedBody,
+        };
         if (n == 0) {
             break;
         }

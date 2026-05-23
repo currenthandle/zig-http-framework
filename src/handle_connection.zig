@@ -81,12 +81,18 @@ fn process_request(
             keep_alive,
             std.http.Status.payload_too_large,
         ),
-        error.InvalidBodyFraming => return try respond_error(
+        error.InvalidBodyFraming,
+        error.BodyTruncated,
+        error.InvalidChunkedBody,
+        => return try respond_error(
             &req,
             keep_alive,
             std.http.Status.bad_request,
         ),
-        else => return err,
+        error.OutOfMemory,
+        error.BodyReadFailed,
+        => return err,
+        // else => return err,
     };
 
     const req_ctx: RequestCtx = .{
@@ -107,7 +113,11 @@ fn process_request(
     return keep_alive;
 }
 
-fn respond_error(req: *std.http.Server.Request, keep_alive: bool, status: std.http.Status) !bool {
+fn respond_error(
+    req: *std.http.Server.Request,
+    keep_alive: bool,
+    status: std.http.Status,
+) !bool {
     try req.respond("", .{
         .keep_alive = keep_alive,
         .extra_headers = &.{},
