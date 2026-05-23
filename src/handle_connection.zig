@@ -76,22 +76,16 @@ fn process_request(
         max_body_bytes,
         body_reader_buf[0..],
     ) catch |err| switch (err) {
-        error.ContentTooLarge => {
-            try req.respond("", .{
-                .keep_alive = keep_alive,
-                .extra_headers = &.{},
-                .status = std.http.Status.payload_too_large,
-            });
-            return keep_alive;
-        },
-        error.InvalidBodyFraming => {
-            try req.respond("", .{
-                .keep_alive = keep_alive,
-                .extra_headers = &.{},
-                .status = std.http.Status.bad_request,
-            });
-            return keep_alive;
-        },
+        error.ContentTooLarge => return try respond_error(
+            &req,
+            keep_alive,
+            std.http.Status.payload_too_large,
+        ),
+        error.InvalidBodyFraming => return try respond_error(
+            &req,
+            keep_alive,
+            std.http.Status.bad_request,
+        ),
         else => return err,
     };
 
@@ -110,5 +104,14 @@ fn process_request(
         .status = response.status,
     });
 
+    return keep_alive;
+}
+
+fn respond_error(req: *std.http.Server.Request, keep_alive: bool, status: std.http.Status) !bool {
+    try req.respond("", .{
+        .keep_alive = keep_alive,
+        .extra_headers = &.{},
+        .status = status,
+    });
     return keep_alive;
 }
