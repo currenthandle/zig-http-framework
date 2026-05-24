@@ -88,11 +88,14 @@ fn process_request(
             std.http.Status.bad_request,
         ),
 
-        ExpectContinueError.HttpExpectationFailed => return try respond_error(
-            &req,
-            keep_alive,
-            std.http.Status.expectation_failed,
-        ),
+        ExpectContinueError.HttpExpectationFailed => {
+            req.head.expect = null;
+            return try respond_error(
+                &req,
+                false,
+                std.http.Status.expectation_failed,
+            );
+        },
         ExpectContinueError.WriteFailed,
         error.OutOfMemory,
         error.BodyReadFailed,

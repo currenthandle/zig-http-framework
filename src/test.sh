@@ -81,3 +81,5 @@ assert_route "http://localhost:8082/person" "404" "Not found" "Missing route par
 assert_route "http://localhost:8082/person/8/extra" "404" "Not found" "Extra route segment"
 assert_post "http://localhost:8082/user" "Casey" "201" "Created new user Casey" "Content-Length body"
 assert_post "http://localhost:8082/user" "Casey" "201" "Created new user Casey" "Chunked body" -H "Transfer-Encoding: chunked"
+assert_post "http://localhost:8082/user" "Casey" "201" "Created new user Casey" "Expect 100 continue" -H "Expect: 100-continue"
+assert_post "http://localhost:8082/user" "Casey" "417" "" "Unsupported Expect header" -H "Expect: nope"
