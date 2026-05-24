@@ -4,21 +4,24 @@ Build the boring correctness layer next.
 
 ## 1. Request Body Reader
 
-- Handle `Content-Length` bodies
-- Handle `Transfer-Encoding: chunked` bodies
-- Return clean errors for too large, truncated, and invalid bodies
-- Keep max body size enforcement
+- Done: handle `Content-Length` bodies
+- Done: handle `Transfer-Encoding: chunked` bodies
+- Done: return clean errors for too large, truncated, and invalid bodies
+- Done: keep max body size enforcement
 
 ## 2. Expect Header Handling
 
-- Handle `Expect: 100-continue`
-- Send `100 Continue` before reading an accepted body
-- Return `417 Expectation Failed` for unsupported `Expect` values
-- Avoid calling `readerExpectNone` when `req.head.expect` is non-null
+- Done: handle `Expect: 100-continue`
+- Done: send `100 Continue` before reading an accepted body
+- Done: return `417 Expectation Failed` for unsupported `Expect` values
+- Done: avoid calling `readerExpectNone` when `req.head.expect` is non-null
 
 ## 3. Error-To-Response Mapping
 
-- `ContentTooLarge` -> `413`
+- Done: `ContentTooLarge` -> `413`
+- Done: invalid body framing -> `400`
+- Done: truncated or invalid body -> `400`
+- Next: route-level empty body validation where a body is required
 - Bad target/query -> `400`
 - Unsupported method -> `405`
 - Unknown route -> `404`
@@ -41,13 +44,15 @@ Build the boring correctness layer next.
 
 ## 6. Raw HTTP Tests
 
-- GET with no body
-- POST with body
-- POST with `Transfer-Encoding: chunked`
-- POST with `Expect: 100-continue`
-- Large body rejected
-- Query params
-- Route params
+- Done: GET with no body
+- Done: POST with `Content-Length`
+- Done: POST with `Transfer-Encoding: chunked`
+- Done: POST with `Expect: 100-continue`
+- Done: unsupported `Expect` rejected
+- Done: large body rejected
+- Done: invalid body framing rejected
+- Done: query params
+- Done: route params
 - Malformed request
 
 After that, middleware and logging become useful. First, make request reading and error behavior solid.
