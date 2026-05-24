@@ -17,11 +17,16 @@ pub fn read_request_body(
         req.head.transfer_encoding,
         max_bytes,
     );
-    const body_reader = try req.readerExpectContinue(reader_buf);
 
     switch (framing) {
-        .content_length => |cl| return read_content_length_body(allocator, max_bytes, cl, body_reader),
-        .chunked => return read_chunked_body(allocator, max_bytes, body_reader),
+        .content_length => |cl| {
+            const body_reader = try req.readerExpectContinue(reader_buf);
+            return read_content_length_body(allocator, max_bytes, cl, body_reader);
+        },
+        .chunked => {
+            const body_reader = try req.readerExpectContinue(reader_buf);
+            return read_chunked_body(allocator, max_bytes, body_reader);
+        },
         .none => return try allocator.alloc(u8, 0),
     }
 }
