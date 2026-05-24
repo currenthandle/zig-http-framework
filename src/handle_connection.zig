@@ -36,11 +36,6 @@ pub fn handle_connection(io: std.Io, stream: net.Stream) !void {
             max_body_bytes,
             body_reader_buf[0..],
         ) catch |err| switch (err) {
-            ReceiveHeadError.HttpConnectionClosing,
-            ReceiveHeadError.HttpRequestTruncated,
-            ReceiveHeadError.ReadFailed,
-            => break,
-
             else => {
                 std.log.err("{}", .{err});
                 return err;
@@ -54,7 +49,16 @@ fn process_request(
     max_body_bytes: usize,
     body_reader_buf: []u8,
 ) !bool {
-    var req = try http_server.receiveHead();
+    var req = http_server.receiveHead() catch |err| switch (err) {
+        ReceiveHeadError.HttpConnectionClosing,
+        ReceiveHeadError.HttpRequestTruncated,
+        ReceiveHeadError.ReadFailed,
+        // Could be 431 later, but no Request exists yet.
+        ReceiveHeadError.HttpHeadersOversize,
+        // Could be 400 later, but no Request exists yet.
+        ReceiveHeadError.HttpHeadersInvalid,
+        => return false,
+    };
 
     var req_arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer req_arena.deinit();
