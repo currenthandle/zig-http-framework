@@ -12,7 +12,6 @@ pub fn read_request_body(
     if (!req.head.method.requestHasBody()) {
         return try allocator.alloc(u8, 0);
     }
-
     const framing = try body_framing(
         req.head.content_length,
         req.head.transfer_encoding,
@@ -53,12 +52,6 @@ fn body_framing(
     }
 
     return .none;
-    // if (content_length) |cl| {
-    //     return read_content_length_body(allocator, max_bytes, cl, body_reader);
-    // }
-    // if (transfer_encoding == .chunked) {
-    //     return read_chunked_body(allocator, max_bytes, body_reader);
-    // }
 }
 
 fn read_content_length_body(
