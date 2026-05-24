@@ -12,20 +12,53 @@ pub fn read_request_body(
     if (!req.head.method.requestHasBody()) {
         return try allocator.alloc(u8, 0);
     }
-    const content_length = req.head.content_length;
-    const transfer_encoding = req.head.transfer_encoding;
 
+    const framing = try body_framing(
+        req.head.content_length,
+        req.head.transfer_encoding,
+        max_bytes,
+    );
+    const body_reader = try req.readerExpectContinue(reader_buf);
+
+    switch (framing) {
+        .content_length => |cl| return read_content_length_body(allocator, max_bytes, cl, body_reader),
+        .chunked => return read_chunked_body(allocator, max_bytes, body_reader),
+        .none => return try allocator.alloc(u8, 0),
+    }
+}
+
+const BodyFraming = union(enum) {
+    none,
+    content_length: u64,
+    chunked,
+};
+
+fn body_framing(
+    content_length: ?u64,
+    transfer_encoding: std.http.TransferEncoding,
+    max_bytes: usize,
+) !BodyFraming {
     if (content_length != null and transfer_encoding != .none) {
         return error.InvalidBodyFraming;
     }
-    const body_reader = req.readerExpectNone(reader_buf);
+
     if (content_length) |cl| {
-        return read_content_length_body(allocator, max_bytes, cl, body_reader);
+        if (cl > max_bytes) return error.ContentTooLarge;
+
+        return .{ .content_length = cl };
     }
+
     if (transfer_encoding == .chunked) {
-        return read_chunked_body(allocator, max_bytes, body_reader);
+        return .chunked;
     }
-    return try allocator.alloc(u8, 0);
+
+    return .none;
+    // if (content_length) |cl| {
+    //     return read_content_length_body(allocator, max_bytes, cl, body_reader);
+    // }
+    // if (transfer_encoding == .chunked) {
+    //     return read_chunked_body(allocator, max_bytes, body_reader);
+    // }
 }
 
 fn read_content_length_body(

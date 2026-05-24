@@ -92,6 +92,10 @@ fn process_request(
         error.OutOfMemory,
         error.BodyReadFailed,
         => return err,
+        //handle these later
+        error.WriteFailed,
+        error.HttpExpectationFailed,
+        => return err,
         // else => return err,
     };
 
