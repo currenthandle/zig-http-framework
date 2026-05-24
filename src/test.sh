@@ -71,6 +71,42 @@ assert_post() {
 	echo
 }
 
+assert_post_file() {
+	local url="$1"
+	local request_body_file="$2"
+	local expected_status="$3"
+	local expected_body="$4"
+	local spec_name="$5"
+	local path="${url#http://localhost:8082}"
+	shift 5
+
+	local body_file
+	body_file="$(mktemp)"
+
+	local status
+	status="$(curl --http1.1 -s -o "$body_file" -w "%{http_code}" "$@" --data-binary "@$request_body_file" "$url")"
+
+	local body
+	body="$(cat "$body_file")"
+	rm -f "$body_file"
+
+	if [ "$status" != "$expected_status" ]; then
+		echo "FAIL $spec_name"
+		echo "POST $path: expected status $expected_status, got $status"
+		exit 1
+	fi
+
+	if [ "$body" != "$expected_body" ]; then
+		echo "FAIL $spec_name"
+		echo "POST $path: expected body '$expected_body', got '$body'"
+		exit 1
+	fi
+
+	echo "PASS $spec_name"
+	echo "POST $path"
+	echo
+}
+
 # curl -s -o /tmp/body -w "%{http_code}" http://localhost:8082/
 assert_route "http://localhost:8082/" "200" "Welcome to the root" "Welcome route"
 assert_route "http://localhost:8082/name" "200" "Casey" "Name route"
@@ -83,5 +119,8 @@ assert_post "http://localhost:8082/user" "Casey" "201" "Created new user Casey" 
 assert_post "http://localhost:8082/user" "Casey" "201" "Created new user Casey" "Chunked body" -H "Transfer-Encoding: chunked"
 assert_post "http://localhost:8082/user" "Casey" "201" "Created new user Casey" "Expect 100 continue" -H "Expect: 100-continue"
 assert_post "http://localhost:8082/user" "Casey" "417" "" "Unsupported Expect header" -H "Expect: nope"
-assert_post "http://localhost:8082/user" "$(head -c 1048577 /dev/zero | tr '\0' 'a')" "413" "" "Body too large"
+large_body_file="$(mktemp)"
+head -c 1048577 /dev/zero | tr '\0' 'a' > "$large_body_file"
+assert_post_file "http://localhost:8082/user" "$large_body_file" "413" "" "Body too large"
+rm -f "$large_body_file"
 assert_post "http://localhost:8082/user" "Casey" "400" "" "Invalid body framing" -H "Content-Length: 5" -H "Transfer-Encoding: chunked"

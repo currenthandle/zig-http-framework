@@ -73,34 +73,11 @@ fn process_request(
         &req,
         max_body_bytes,
         body_reader_buf[0..],
-    ) catch |err| switch (err) {
-        error.ContentTooLarge => return try respond_error(
-            &req,
-            keep_alive,
-            std.http.Status.payload_too_large,
-        ),
-        error.InvalidBodyFraming,
-        error.BodyTruncated,
-        error.InvalidChunkedBody,
-        => return try respond_error(
-            &req,
-            keep_alive,
-            std.http.Status.bad_request,
-        ),
-
-        ExpectContinueError.HttpExpectationFailed => {
-            req.head.expect = null;
-            return try respond_error(
-                &req,
-                false,
-                std.http.Status.expectation_failed,
-            );
-        },
-        ExpectContinueError.WriteFailed,
-        error.OutOfMemory,
-        error.BodyReadFailed,
-        => return err,
-    };
+    ) catch |err| return try handle_request_body_errors(
+        err,
+        &req,
+        keep_alive,
+    );
 
     const req_ctx: RequestCtx = .{
         .target = req_target,
@@ -118,6 +95,42 @@ fn process_request(
     });
 
     return keep_alive;
+}
+
+fn handle_request_body_errors(
+    err: anyerror,
+    req: *std.http.Server.Request,
+    keep_alive: bool,
+) !bool {
+    switch (err) {
+        error.ContentTooLarge => return try respond_error(
+            req,
+            keep_alive,
+            std.http.Status.payload_too_large,
+        ),
+        error.InvalidBodyFraming,
+        error.BodyTruncated,
+        error.InvalidChunkedBody,
+        => return try respond_error(
+            req,
+            keep_alive,
+            std.http.Status.bad_request,
+        ),
+
+        ExpectContinueError.HttpExpectationFailed => {
+            req.head.expect = null;
+            return try respond_error(
+                req,
+                false,
+                std.http.Status.expectation_failed,
+            );
+        },
+        ExpectContinueError.WriteFailed,
+        error.OutOfMemory,
+        error.BodyReadFailed,
+        => return err,
+        else => return err,
+    }
 }
 
 fn respond_error(
