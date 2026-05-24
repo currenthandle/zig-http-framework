@@ -39,10 +39,6 @@ pub fn handle_connection(io: std.Io, stream: net.Stream) !void {
             ReceiveHeadError.HttpConnectionClosing,
             ReceiveHeadError.HttpRequestTruncated,
             ReceiveHeadError.ReadFailed,
-            // Req.respond
-            // consider adding: Expect: 100-continue support
-            ExpectContinueError.WriteFailed,
-            ExpectContinueError.HttpExpectationFailed,
             => break,
 
             else => {
@@ -64,8 +60,6 @@ fn process_request(
     defer req_arena.deinit();
     const req_allocator = req_arena.allocator();
 
-    // save target and method before read_req_body (req.readerExpectNone)
-    // poisons request /  request headers
     const req_target = try req_allocator.dupe(u8, req.head.target);
     const req_method = req.head.method;
     const keep_alive = req.head.keep_alive;
@@ -89,14 +83,16 @@ fn process_request(
             keep_alive,
             std.http.Status.bad_request,
         ),
+
+        ExpectContinueError.HttpExpectationFailed => return try respond_error(
+            &req,
+            keep_alive,
+            std.http.Status.expectation_failed,
+        ),
+        ExpectContinueError.WriteFailed,
         error.OutOfMemory,
         error.BodyReadFailed,
         => return err,
-        //handle these later
-        error.WriteFailed,
-        error.HttpExpectationFailed,
-        => return err,
-        // else => return err,
     };
 
     const req_ctx: RequestCtx = .{
