@@ -1,5 +1,8 @@
 const std = @import("std");
 const http_types = @import("http_types.zig");
+const responses = @import("responses.zig");
+// const not_found = responses.not_found;
+const bad_request = responses.bad_request;
 
 const Request = http_types.Request;
 
@@ -9,14 +12,16 @@ pub fn read_request_body(
     max_bytes: usize,
     reader_buf: []u8,
 ) ![]u8 {
-    if (!req.head.method.requestHasBody()) {
-        return try allocator.alloc(u8, 0);
-    }
     const framing = try body_framing(
         req.head.content_length,
         req.head.transfer_encoding,
         max_bytes,
     );
+
+    if (!req.head.method.requestHasBody()) {
+        if (framing != .none) return error.BodyNotAllowed;
+        return try allocator.alloc(u8, 0);
+    }
 
     switch (framing) {
         .content_length => |cl| {

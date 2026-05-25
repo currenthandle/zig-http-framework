@@ -107,6 +107,43 @@ assert_post_file() {
 	echo
 }
 
+assert_request() {
+	local method="$1"
+	local url="$2"
+	local request_body="$3"
+	local expected_status="$4"
+	local expected_body="$5"
+	local spec_name="$6"
+	local path="${url#http://localhost:8082}"
+	shift 6
+
+	local body_file
+	body_file="$(mktemp)"
+
+	local status
+	status="$(curl --http1.1 -s -o "$body_file" -w "%{http_code}" "$@" -X "$method" --data-binary "$request_body" "$url")"
+
+	local body
+	body="$(cat "$body_file")"
+	rm -f "$body_file"
+
+	if [ "$status" != "$expected_status" ]; then
+		echo "FAIL $spec_name"
+		echo "$method $path: expected status $expected_status, got $status"
+		exit 1
+	fi
+
+	if [ "$body" != "$expected_body" ]; then
+		echo "FAIL $spec_name"
+		echo "$method $path: expected body '$expected_body', got '$body'"
+		exit 1
+	fi
+
+	echo "PASS $spec_name"
+	echo "$method $path"
+	echo
+}
+
 # curl -s -o /tmp/body -w "%{http_code}" http://localhost:8082/
 assert_route "http://localhost:8082/" "200" "Welcome to the root" "Welcome route"
 assert_route "http://localhost:8082/name" "200" "Casey" "Name route"
@@ -124,3 +161,5 @@ head -c 1048577 /dev/zero | tr '\0' 'a' > "$large_body_file"
 assert_post_file "http://localhost:8082/user" "$large_body_file" "413" "" "Body too large"
 rm -f "$large_body_file"
 assert_post "http://localhost:8082/user" "Casey" "400" "" "Invalid body framing" -H "Content-Length: 5" -H "Transfer-Encoding: chunked"
+assert_request "GET" "http://localhost:8082/name" "Casey" "400" "" "Body disallowed by default"
+assert_post "http://localhost:8082/user" "" "400" "Request body is required" "Body required by default"

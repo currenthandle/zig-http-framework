@@ -111,6 +111,7 @@ fn handle_request_body_errors(
         error.InvalidBodyFraming,
         error.BodyTruncated,
         error.InvalidChunkedBody,
+        error.BodyNotAllowed,
         => return try respond_error(
             req,
             keep_alive,
