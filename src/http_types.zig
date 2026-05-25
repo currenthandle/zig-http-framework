@@ -32,10 +32,18 @@ pub const HandlerCtx = struct {
 
 pub const RouteHandler = *const fn (HandlerCtx) anyerror!Response;
 
+const BodyPolicy = enum {
+    none,
+    optional,
+    required,
+    default,
+};
+
 pub const Route = struct {
     path: []const u8,
     method: Method,
     handler: RouteHandler,
+    body_policy: BodyPolicy = .default,
 };
 
 pub fn param(params: []const Param, name: []const u8) ?[]const u8 {

@@ -1,7 +1,9 @@
 const std = @import("std");
 
 const http_types = @import("http_types.zig");
-const routes = @import("routes.zig").routes;
+const add_body_policy = @import("route_config.zig").add_body_policy;
+const route_specs = @import("routes.zig").routes;
+const routes = add_body_policy(route_specs);
 
 const Response = http_types.Response;
 const Param = http_types.Param;
@@ -34,6 +36,12 @@ pub fn router(req_ctx: RequestCtx) !Response {
         };
 
         const matched_route = match_opt orelse continue;
+        if (route.body_policy == .none and req_ctx.body.len > 0) {
+            return bad_request("Request body is not allowed");
+        }
+        if (route.body_policy == .required and req_ctx.body.len == 0) {
+            return bad_request("Request body is required");
+        }
 
         return matched_route.handler(.{
             .route_params = matched_route.params,
